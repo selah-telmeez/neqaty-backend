@@ -377,6 +377,7 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
   const allStudentsBySpecializationMap = new Map();
 
   for (const school of generalInfo.organizations) {
+    const relatedSchool = generalInfo?.schools?.find(sch => Number(sch.organizationId) === Number(school?.id));
     const relatedEmployees = generalInfo.employees.filter(
       emp => emp.organization_id === school.id
     );
@@ -443,7 +444,6 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
     }
 
     const groupedStudents = Array.from(studentsBySpecializationMap.values());
-
     // store per school
     result[school.id] = {
       organization: school,
@@ -452,6 +452,9 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
       admins,
       teachers: groupedTeachers,
       students: groupedStudents,
+      workshops: relatedSchool?.no_of_workshops || 0,
+      labs: relatedSchool?.no_of_labs || 0,
+      classes: relatedSchool?.no_of_classes || 0
     };
 
     // ===== ACCUMULATE "ALL" =====

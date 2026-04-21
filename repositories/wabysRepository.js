@@ -310,6 +310,11 @@ exports.fetchDashboardGeneralInfoData = async (systemId) => {
     });
     const organizationIds = organizations.map(org => org.id);
 
+    const schools = await db.School.findAll({
+        attributes: ["no_of_workshops", "no_of_labs", "no_of_classes", "organizationId"],
+        where: { organizationId: organizationIds }
+    })
+
     const teachers = await db.Teacher.findAll({
         attributes: ['id', 'employee_id', 'subject_id'],
         include: [
@@ -367,7 +372,7 @@ exports.fetchDashboardGeneralInfoData = async (systemId) => {
     });
 
     return {
-        organizations, employees: [...employees, ...teacherEmployees], teachers, students, subjects, specializations
+        organizations, schools, employees: [...employees, ...teacherEmployees], teachers, students, subjects, specializations
     };
 };
 
