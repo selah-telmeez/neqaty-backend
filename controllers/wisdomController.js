@@ -134,3 +134,57 @@ exports.getStudents = async (req, res) => {
         });
     }
 };
+
+exports.getClassRooms = async (req, res) => {
+    try {
+        const classrooms = await wisdomService.getClassRoomsData();
+
+        res.status(200).json({
+            status: "success",
+            message: "classrooms got fetched successfully",
+            classrooms
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
+exports.getSpecializations = async (req, res) => {
+    try {
+        const specializations = await wisdomService.getSpecializationsData();
+
+        res.status(200).json({
+            status: "success",
+            message: "specializations got fetched successfully",
+            specializations
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
+exports.getClasses = async (req, res) => {
+    try {
+        const classes = await wisdomService.getClassesData();
+
+        res.status(200).json({
+            status: "success",
+            message: "classes got fetched successfully",
+            classes
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};

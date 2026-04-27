@@ -627,3 +627,15 @@ exports.getWisdomStudentsData = async () => {
   const students = await wabysRepository.fetchSystemRelatedStudentsOrTrainers(1);
   return students
 }
+
+exports.getClassRoomsData = async () => {
+  return await wabysRepository.fetchSystemRelatedClassRooms(1);
+};
+
+exports.getSpecializationsData = async () => {
+  return await wabysRepository.fetchSystemRelatedSpecializations(1);
+};
+
+exports.getClassesData = async () => {
+  return await wabysRepository.fetchSystemRelatedClasses(1);
+};

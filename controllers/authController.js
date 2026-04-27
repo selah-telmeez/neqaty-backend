@@ -216,6 +216,7 @@ const login = async (req, res) => {
         },
         where: { user_id: user.id }
       });
+      console.log(user.id)
       if (student) {
         // get the related organization
         organization = await Organization.findOne({

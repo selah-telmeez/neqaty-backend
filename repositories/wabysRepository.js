@@ -918,3 +918,36 @@ exports.fetchSystemRelatedStudentsOrTrainers = async (systemId) => {
         order: [["createdAt", "DESC"]],
     });
 };
+
+exports.fetchSystemRelatedClasses = async (systemId) => {
+    return await db.Class.findAll({
+        include: [
+            {
+                model: db.ClassRoom,
+                as: "classRoom",
+                required: true,
+                attributes: [],
+                include: [
+                    {
+                        model: db.Organization,
+                        as: "organization",
+                        required: true,
+                        attributes: [],
+                        include: [
+                            {
+                                model: db.System,
+                                as: "systems",
+                                required: true,
+                                where: { id: systemId },
+                                attributes: [],
+                                through: { attributes: [] },
+                            },
+                        ],
+                    },
+                ],
+            }
+        ],
+        distinct: true,
+        order: [["createdAt", "DESC"]],
+    });
+};

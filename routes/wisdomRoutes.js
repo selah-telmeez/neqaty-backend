@@ -18,6 +18,7 @@ router.post("/pdms/mcqExam", pdmsController.submitMcqExamAnswers);
 router.get("/pdms/dashboard", pdmsController.fetchWisdomPdmsDashboard);
 router.get("/stages", wisdomController.fetchWisdomStages);
 router.get("/subjects", wisdomController.fetchWisdomSubjects);
+// old specialization api
 router.get("/specializations", wisdomController.fetchWisdomSpecializations);
 
 module.exports = router;
