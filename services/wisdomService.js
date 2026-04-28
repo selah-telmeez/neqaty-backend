@@ -363,11 +363,11 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
       organizations: generalInfo.organizations,
       managers: [],
       students: [],
-      workshops: [],
-      classes: [],
+      workshops: 0,
+      classes: 0,
       admins: [],
       teachers: [],
-      labs: [],
+      labs: 0,
       employees: generalInfo.employees,
     },
   };
@@ -460,6 +460,9 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
     // ===== ACCUMULATE "ALL" =====
     result.All.managers.push(...academicPrinciple, ...exectiveManager);
     result.All.admins.push(...admins);
+    result.All.workshops += relatedSchool?.no_of_workshops || 0;
+    result.All.labs += relatedSchool?.no_of_labs || 0;
+    result.All.classes += relatedSchool?.no_of_classes || 0;
 
     for (const group of groupedTeachers) {
       const subjectId = group.subject?.id ?? null;
