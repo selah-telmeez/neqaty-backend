@@ -705,7 +705,13 @@ const adminLogin = async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    console.error("LOGIN ERROR:", error);
+    console.error(error.stack);
+
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
 
