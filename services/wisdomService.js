@@ -463,7 +463,7 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
     result.All.workshops += relatedSchool?.no_of_workshops || 0;
     result.All.labs += relatedSchool?.no_of_labs || 0;
     result.All.classes += relatedSchool?.no_of_classes || 0;
-
+// 
     for (const group of groupedTeachers) {
       const subjectId = group.subject?.id ?? null;
 
