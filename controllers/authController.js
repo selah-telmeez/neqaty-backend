@@ -429,6 +429,39 @@ const signup = async (req, res) => {
   }
 };
 
+const changeUserPassword = async (req, res) => {
+  try {
+    const {
+      user_id,
+      new_password
+    } = req.body;
+
+    if (
+      !user_id ||
+      !new_password
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const hashedPassword = await hashPassword(new_password);
+
+    const updatePassword = await User.update(
+      { password: hashedPassword },
+      {
+        where: { id: user_id }
+      }
+    );
+
+    res.status(201).json({
+      message: "User password updated successfully",
+      updatePassword
+    });
+  } catch (error) {
+    console.error("Signup Error:", error);
+    res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
 const signupBulk = async (req, res) => {
   try {
     const users = req.body;
@@ -715,4 +748,4 @@ const adminLogin = async (req, res) => {
   }
 };
 
-module.exports = { signup, ebdaEdulogin, login, adminSignup, adminLogin, signupBulk };
+module.exports = { signup, ebdaEdulogin, login, changeUserPassword, adminSignup, adminLogin, signupBulk };
