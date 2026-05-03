@@ -58,6 +58,7 @@ app.use("/uploads/chat", express.static(path.join(__dirname, "uploads/chat")));
 app.use('/news', express.static(path.join(__dirname, 'news')));
 
 // Routes
+
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/wisdom", wisdomRoutes);
