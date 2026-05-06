@@ -125,6 +125,12 @@ exports.viewTeacher = async (req, res) => {
                       model: Class,
                       as: "class",
                       attributes: ["id", "name"],
+                      include: [
+                        {
+                          model: Stage,
+                          as: "stage"
+                        }
+                      ]
                     },
                   ],
                 },
