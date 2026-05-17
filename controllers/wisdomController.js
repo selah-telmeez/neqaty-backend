@@ -117,6 +117,33 @@ exports.createNewGradeBook = async (req, res) => {
     }
 };
 
+exports.GetGradeBooks = async (req, res) => {
+    try {
+        const gradebooks = await wisdomService.getWisdomGradebooksData();
+
+        res.status(200).json({
+            status: "success",
+            message: "grade books got fetched successfully",
+            gradebooks
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+exports.insertGradeBookScore = async (req, res) => {
+    try {
+        await wisdomService.postWisdomInsertGradebookData(req.body);
+
+        res.status(200).json({
+            status: "success",
+            message: "grade book got inserted successfully",
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
 exports.getStudents = async (req, res) => {
     try {
         const students = await wisdomService.getWisdomStudentsData();
@@ -125,6 +152,24 @@ exports.getStudents = async (req, res) => {
             status: "success",
             message: "students got fetched successfully",
             students
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
+exports.getTeachers = async (req, res) => {
+    try {
+        const teachers = await wisdomService.getWisdomTeachersData();
+
+        res.status(200).json({
+            status: "success",
+            message: "teachers got fetched successfully",
+            teachers
         });
     } catch (err) {
         console.error("error:", err);

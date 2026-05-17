@@ -626,9 +626,24 @@ exports.postWisdomCreateGradebookData = async (data) => {
   return gradebook;
 }
 
+exports.getWisdomGradebooksData = async () => {
+  const gradebook = await wabysRepository.fetchSystemRelatedGradebooksData(1);
+  return gradebook;
+}
+
+exports.postWisdomInsertGradebookData = async (data) => {
+  const gradebook = await wabysRepository.insertGradebookScoreData(data);
+  return gradebook;
+}
+
 exports.getWisdomStudentsData = async () => {
-  const students = await wabysRepository.fetchSystemRelatedStudentsOrTrainers(1);
+  const students = await wabysRepository.fetchSystemRelatedStudentsOrTrainees(1);
   return students
+}
+
+exports.getWisdomTeachersData = async () => {
+  const teachers = await wabysRepository.fetchSystemRelatedTeachersOrTrainers(1);
+  return teachers
 }
 
 exports.getClassRoomsData = async () => {

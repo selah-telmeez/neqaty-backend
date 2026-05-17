@@ -650,6 +650,39 @@ exports.insertNewGradebookData = async (data) => {
     return gradebook
 };
 
+exports.fetchSystemRelatedGradebooksData = async (systemId) => {
+    const gradebook = await db.QuizzesTestsTemplate.findAll({
+        distinct: true,
+        // attributes: [],
+        include: [
+            {
+                model: db.Organization,
+                as: "organization",
+                where: { type: "school" },
+                required: true,
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.System,
+                        as: "systems",
+                        where: { id: systemId },
+                        attributes: [],
+                        through: { attributes: [] }
+                    }
+                ]
+            }
+        ]
+    });
+
+    return gradebook
+};
+
+exports.insertGradebookScoreData = async (data) => {
+    const gradebook = await db.QuizTest.create(data);
+    console.log(gradebook)
+    return gradebook
+};
+
 exports.insertNewClassData = async (data) => {
     return await db.Class.create(data);
 };
@@ -894,7 +927,7 @@ exports.fetchAllAuthorityData = async () => {
     });
 };
 
-exports.fetchSystemRelatedStudentsOrTrainers = async (systemId) => {
+exports.fetchSystemRelatedStudentsOrTrainees = async (systemId) => {
     return await db.Student.findAll({
         include: [
             {
@@ -919,6 +952,37 @@ exports.fetchSystemRelatedStudentsOrTrainers = async (systemId) => {
     });
 };
 
+exports.fetchSystemRelatedTeachersOrTrainers = async (systemId) => {
+    return await db.Teacher.findAll({
+        include: [
+            {
+                model: db.Employee,
+                as: "employee",
+                include: [
+                    {
+                        model: db.Organization,
+                        as: "organization",
+                        required: true,
+                        attributes: [],
+                        include: [
+                            {
+                                model: db.System,
+                                as: "systems",
+                                required: true,
+                                where: { id: systemId },
+                                attributes: [],
+                                through: { attributes: [] },
+                            },
+                        ],
+                    },
+                ],
+            }
+        ],
+        distinct: true,
+        order: [["createdAt", "DESC"]],
+    });
+};
+
 exports.fetchSystemRelatedClasses = async (systemId) => {
     return await db.Class.findAll({
         include: [
@@ -926,7 +990,7 @@ exports.fetchSystemRelatedClasses = async (systemId) => {
                 model: db.ClassRoom,
                 as: "classRoom",
                 required: true,
-                attributes: [],
+                attributes: ["id", "organization_id"],
                 include: [
                     {
                         model: db.Organization,

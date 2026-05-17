@@ -10,6 +10,8 @@ router.get("/dashboard/general-information", wisdomController.fetchWisdomDashboa
 router.get("/schools", wisdomController.fetchWisdomRelatedSchools);
 router.get("/forms", wisdomController.fetchWisdomForms);
 router.post("/create-new-grade-book", wisdomController.createNewGradeBook);
+router.get("/gradebooks", wisdomController.GetGradeBooks);
+router.post("/insert-grade-book-score", wisdomController.insertGradeBookScore);
 router.use("/data", wisdomDataRoutes);
 // old apis
 router.get("/pdms/forms", pdmsController.allWisdomForms);
