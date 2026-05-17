@@ -233,3 +233,22 @@ exports.getClasses = async (req, res) => {
         });
     }
 };
+
+exports.getGradebookScores = async (req, res) => {
+    try {
+        const id = req.params.template_id;
+        const gradebooks = await wisdomService.getGradeBooksScoresData(id);
+
+        res.status(200).json({
+            status: "success",
+            message: "gradebooks got fetched successfully",
+            gradebooks
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};

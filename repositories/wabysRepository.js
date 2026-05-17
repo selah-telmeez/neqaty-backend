@@ -678,9 +678,13 @@ exports.fetchSystemRelatedGradebooksData = async (systemId) => {
 };
 
 exports.insertGradebookScoreData = async (data) => {
+    if (Array.isArray(data)) {
+        const gradebooks = await db.QuizTest.bulkCreate(data);
+        return gradebooks;
+    }
+
     const gradebook = await db.QuizTest.create(data);
-    console.log(gradebook)
-    return gradebook
+    return gradebook;
 };
 
 exports.insertNewClassData = async (data) => {

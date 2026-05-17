@@ -8,5 +8,6 @@ router.get("/classrooms", wisdomController.getClassRooms);
 // the new specialization api
 router.get("/specializations", wisdomController.getSpecializations);
 router.get("/classes", wisdomController.getClasses);
+router.get("/gradebooks/:template_id", wisdomController.getGradebookScores);
 
 module.exports = router;

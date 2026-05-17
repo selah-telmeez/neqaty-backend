@@ -283,3 +283,18 @@ exports.fetchWisdomPdmsDashboardData = async (year, systemId, stage, subject, sp
         studentsAttendance, studentsBehavior, tasks
     };
 };
+
+exports.fetchWisdomGradebookScores = async (id) => {
+    return await db.QuizTest.findAll({
+        include: [
+            {
+                model: db.Student,
+                as: "student",
+                required: true,
+            }
+        ],
+        where: { template_id: id},
+        distinct: true,
+        order: [["createdAt", "DESC"]],
+    });
+};

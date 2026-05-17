@@ -657,3 +657,7 @@ exports.getSpecializationsData = async () => {
 exports.getClassesData = async () => {
   return await wabysRepository.fetchSystemRelatedClasses(1);
 };
+
+exports.getGradeBooksScoresData = async (id) => {
+  return await wisdomRepository.fetchWisdomGradebookScores(id);
+};
