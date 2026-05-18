@@ -687,6 +687,10 @@ exports.insertGradebookScoreData = async (data) => {
     return gradebook;
 };
 
+exports.insertTeacherAbsenceData = async (data) => {
+    return await db.TeacherAbsence.create(data);
+};
+
 exports.insertNewClassData = async (data) => {
     return await db.Class.create(data);
 };
@@ -804,6 +808,47 @@ exports.fetchSystemRelatedSpecializations = async (systemId) => {
                         where: { id: systemId },
                         attributes: [],
                         through: { attributes: [] },
+                    },
+                ],
+            },
+        ],
+        distinct: true,
+        order: [["createdAt", "DESC"]],
+    });
+};
+
+exports.fetchSystemRelatedSubjects = async (systemId) => {
+    return await db.Subject.findAll({
+        include: [
+            {
+                model: db.Teacher,
+                as: "teachers",
+                required: true,
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Employee,
+                        as: "employee",
+                        required: true,
+                        attributes: ["id"],
+                        include: [
+                            {
+                                model: db.Organization,
+                                as: "organization",
+                                required: true,
+                                attributes: ["id", "name"],
+                                include: [
+                                    {
+                                        model: db.System,
+                                        as: "systems",
+                                        required: true,
+                                        where: { id: systemId },
+                                        attributes: [],
+                                        through: { attributes: [] },
+                                    },
+                                ],
+                            },
+                        ],
                     },
                 ],
             },

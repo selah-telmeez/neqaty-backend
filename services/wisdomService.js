@@ -5,7 +5,9 @@ const { calculateWisdomMonthlyScores, calculateWisdomTotalScore, fillMissingForm
 
 exports.getWisdomDashboardData = async (year, stage, subject, specialization, fromDate, toDate) => {
   const dashboard = await wabysRepository.fetchDashboardData(year, 1, stage, subject, specialization, fromDate, toDate);
-
+  const students = dashboard.students;
+  const teachers = dashboard.teachers;
+  const wisdomQuizTest = await wisdomRepository.fetchDashboardQuizTest(year, students, teachers, fromDate, toDate);
   const results = {
     total: {
       id: "All",
@@ -105,6 +107,38 @@ exports.getWisdomDashboardData = async (year, stage, subject, specialization, fr
     const allStudentsAttendance = relatedSTA.length > 0 ? (attendedCount / relatedSTA.length) * 100 : 0;
     const currentTeacherSessions = relatedTeachers.map(teacher => (teacher.actual_sessions / teacher.planned_sessions) * 100);
     const currentAvgSessions = currentTeacherSessions.length === 0 ? 0 : currentTeacherSessions.reduce((sum, v) => sum + v, 0) / currentTeacherSessions.length;
+    const relatedQuizesTests = wisdomQuizTest.filter(quiz => quiz.template.organization_id === school.id)
+    const groupedTemplates = Object.values(
+      relatedQuizesTests.reduce((acc, item) => {
+        const plainItem = item.get ? item.get({ plain: true }) : item;
+    
+        const template = plainItem.template;
+    
+        if (!template) return acc;
+    
+        if (!acc[template.id]) {
+          acc[template.id] = {
+            id: template.id,
+            name: template.name,
+            type: template.type,
+            createdAt: plainItem.createdAt,
+            scores: []
+          };
+        }
+    
+        acc[template.id].scores.push({
+          student_id: plainItem.student_id,
+          teacher_id: plainItem.teacher_id
+        });
+    
+        return acc;
+      }, {})
+    );
+
+    const allPROForms = groupedTemplates.filter(form => form.type === "مشروع تخرج");
+    const allFOForms = groupedTemplates.filter(form => form.type === "اختبار تكويني");
+    const allSUForms = groupedTemplates.filter(form => form.type === "اختبار تجميعي");
+
     const [
       allWScore, allWCPScore,
       allEDUScore, allCScore, allTScore,
@@ -463,7 +497,7 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
     result.All.workshops += relatedSchool?.no_of_workshops || 0;
     result.All.labs += relatedSchool?.no_of_labs || 0;
     result.All.classes += relatedSchool?.no_of_classes || 0;
-// 
+    // 
     for (const group of groupedTeachers) {
       const subjectId = group.subject?.id ?? null;
 
@@ -636,6 +670,11 @@ exports.postWisdomInsertGradebookData = async (data) => {
   return gradebook;
 }
 
+exports.postWisdomInsertTeacherAbsenceData = async (data) => {
+  const teacherAbsence = await wabysRepository.insertTeacherAbsenceData(data);
+  return teacherAbsence;
+}
+
 exports.getWisdomStudentsData = async () => {
   const students = await wabysRepository.fetchSystemRelatedStudentsOrTrainees(1);
   return students
@@ -652,6 +691,31 @@ exports.getClassRoomsData = async () => {
 
 exports.getSpecializationsData = async () => {
   return await wabysRepository.fetchSystemRelatedSpecializations(1);
+};
+
+exports.getSubjectsData = async () => {
+  const subjects = await wabysRepository.fetchSystemRelatedSubjects(1);
+
+  return subjects.map(subject => {
+    const plainSubject = subject.get({ plain: true });
+
+    const organizationsMap = new Map();
+
+    plainSubject.teachers?.forEach(teacher => {
+      const organization = teacher.employee?.organization;
+
+      if (organization) {
+        organizationsMap.set(organization.id, organization);
+      }
+    });
+
+    return {
+      id: plainSubject.id,
+      name: plainSubject.name,
+      category_id: plainSubject.category_id,
+      organizations: Array.from(organizationsMap.values()),
+    };
+  });
 };
 
 exports.getClassesData = async () => {

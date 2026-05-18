@@ -7,6 +7,7 @@ router.get("/teachers", wisdomController.getTeachers);
 router.get("/classrooms", wisdomController.getClassRooms);
 // the new specialization api
 router.get("/specializations", wisdomController.getSpecializations);
+router.get("/subjects", wisdomController.getSubjects);
 router.get("/classes", wisdomController.getClasses);
 router.get("/gradebooks/:template_id", wisdomController.getGradebookScores);
 

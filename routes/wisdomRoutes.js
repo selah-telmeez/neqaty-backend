@@ -12,6 +12,7 @@ router.get("/forms", wisdomController.fetchWisdomForms);
 router.post("/create-new-grade-book", wisdomController.createNewGradeBook);
 router.get("/gradebooks", wisdomController.GetGradeBooks);
 router.post("/insert-grade-book-score", wisdomController.insertGradeBookScore);
+router.post("/teacher/absence", wisdomController.insertTeacherAbsence);
 router.use("/data", wisdomDataRoutes);
 // old apis
 router.get("/pdms/forms", pdmsController.allWisdomForms);
@@ -19,8 +20,8 @@ router.get("/pdms/pedagogicalTest", pdmsController.fetchPedagogicalTest);
 router.post("/pdms/mcqExam", pdmsController.submitMcqExamAnswers);
 router.get("/pdms/dashboard", pdmsController.fetchWisdomPdmsDashboard);
 router.get("/stages", wisdomController.fetchWisdomStages);
+// old specialization / subjects api
 router.get("/subjects", wisdomController.fetchWisdomSubjects);
-// old specialization api
 router.get("/specializations", wisdomController.fetchWisdomSpecializations);
 
 module.exports = router;

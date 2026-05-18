@@ -298,3 +298,67 @@ exports.fetchWisdomGradebookScores = async (id) => {
         order: [["createdAt", "DESC"]],
     });
 };
+
+exports.fetchDashboardQuizTest = async (year, students, teachers, fromDate, toDate) => {
+        // start and end of the selected year
+        let startOfYear = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
+        let endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
+    
+
+        // override start date if provided
+        if (fromDate && fromDate !== "All") {
+            startOfYear = new Date(`${fromDate}T00:00:00.000Z`);
+        }
+    
+        // override end date if provided
+        if (toDate && toDate !== "All") {
+            endOfYear = new Date(`${toDate}T23:59:59.999Z`);
+        }
+    
+        // safety check
+        if (startOfYear > endOfYear) {
+            throw new Error("Invalid date range: fromDate is after toDate");
+        }
+    
+    const studentIds = students.map(s => s.id);
+    const TeacherUserIds = teachers.map(s => s.id);
+
+    // fetch Student Quizes and test's data related to selected organizations
+    const quizesTests = await db.QuizTest.findAll({
+        attributes: ['student_id', 'teacher_id', 'createdAt'],
+        include: [
+            {
+                model: db.QuizzesTestsTemplate,
+                as: "template",
+                required: true,
+                include: [
+                    {
+                        model: db.Subject,
+                        as: "subject",
+                        required: true,
+                    }
+                ],
+                where: {
+                    start_date:{
+                        [Op.between]: [startOfYear, endOfYear]
+                    },
+                    end_date:{
+                        [Op.between]: [startOfYear, endOfYear]
+                    }
+                }
+            }
+        ],
+        where: {
+            teacher_id: { [Op.in]: TeacherUserIds },
+            student_id: { [Op.in]: studentIds },
+        },
+        // where: {
+        //     student_id: { [Op.in]: studentIds },
+        //     createdAt: {
+        //         [Op.between]: [startOfYear, endOfYear]
+        //     }
+        // },
+    });
+
+    return quizesTests
+}
