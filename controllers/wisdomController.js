@@ -265,6 +265,24 @@ exports.getClasses = async (req, res) => {
     }
 };
 
+exports.getDepartment = async (req, res) => {
+    try {
+        const departments = await wisdomService.getDepartmentsData();
+
+        res.status(200).json({
+            status: "success",
+            message: "departments got fetched successfully",
+            departments
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
 exports.getGradebookScores = async (req, res) => {
     try {
         const id = req.params.template_id;

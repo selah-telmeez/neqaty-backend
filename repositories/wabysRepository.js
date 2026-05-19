@@ -1064,3 +1064,44 @@ exports.fetchSystemRelatedClasses = async (systemId) => {
         order: [["createdAt", "DESC"]],
     });
 };
+
+exports.fetchSystemRelatedDepartments = async (systemId) => {
+    return await db.Department.findAll({
+        include: [
+            {
+                model: db.Teacher,
+                as: "teachers",
+                required: true,
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Employee,
+                        as: "employee",
+                        required: true,
+                        attributes: ["id"],
+                        include: [
+                            {
+                                model: db.Organization,
+                                as: "organization",
+                                required: true,
+                                attributes: ["id", "name"],
+                                include: [
+                                    {
+                                        model: db.System,
+                                        as: "systems",
+                                        required: true,
+                                        where: { id: systemId },
+                                        attributes: [],
+                                        through: { attributes: [] },
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+        distinct: true,
+        order: [["createdAt", "DESC"]],
+    });
+};

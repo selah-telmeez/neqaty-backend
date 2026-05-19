@@ -106,7 +106,7 @@ function calculateTaskAverage(items) {
     return count === 0 ? null : total / count;
 }
 
-exports.calculateWisdomMonthlyScores = (year, month, W, WCP, EDU, C, T, FT, DO, tasks, STB, STD) => {
+exports.calculateWisdomMonthlyScores = (year, month, W, WCP, EDU, C, T, FT, DO, PRO, FO, SU, tasks, STB, STD) => {
     const months = ['يناير', 'فبراير', 'مارس', 'ابريل', 'مايو', 'يونيو', 'يوليو', 'اغسطس', 'سبتمبر', 'اكتوبر', 'نوفمبر', 'ديسمبر'];
     const filteredW = filterPerMonth(year, month, W);
     const filteredWEach = filterEachPerMonth(year, month, W);
@@ -137,6 +137,15 @@ exports.calculateWisdomMonthlyScores = (year, month, W, WCP, EDU, C, T, FT, DO, 
     const filteredDO = filterPerMonth(year, month, DO);
     const filteredDOEach = filterEachPerMonth(year, month, DO);
     const filteredDOCodes = filterCodePerMonth(year, month, DO);
+    const filteredPRO = filterPerMonth(year, month, PRO);
+    const filteredPROEach = filterEachPerMonth(year, month, PRO);
+    const filteredPROCodes = filterCodePerMonth(year, month, PRO);
+    const filteredFO = filterPerMonth(year, month, FO);
+    const filteredFOEach = filterEachPerMonth(year, month, FO);
+    const filteredFOCodes = filterCodePerMonth(year, month, FO);
+    const filteredSU = filterPerMonth(year, month, SU);
+    const filteredSUEach = filterEachPerMonth(year, month, SU);
+    const filteredSUCodes = filterCodePerMonth(year, month, SU);
     const changedateSTB = STB.map(({ behavior_date, ...rest }) => ({ ...rest, formDate: behavior_date }));
     const filteringSTB = filterPerMonth(year, month, changedateSTB);
     const filteredSTB = (filteringSTB.length !== 0 && STD.lenght !== 0) ? 100 - ((filteringSTB.length / STD.length) * 100) : 100;
@@ -147,7 +156,7 @@ exports.calculateWisdomMonthlyScores = (year, month, W, WCP, EDU, C, T, FT, DO, 
     const eebm = (filteredW * 40) + (tasksAvg * 0.4) + (filteredWCP * 20);
     const epbm = (filteredEDU * 33) + (filteredC * 33) + (filteredT * 33);
     const odbm = (filteredDO * 25) + (filteredSTB * 0.25) + (0) + (0);
-    const apbm = (0) + (0) + (0);
+    const apbm = (filteredPRO * 33) + (filteredFO * 33) + (filteredSU * 33);
     const tqbm = (filteredFT * 33) + (0) + (0);
     const geebm = (eebm * 0.2) + (epbm * 0.2) + (odbm * 0.2) + (apbm * 0.2) + (tqbm * 0.2);
     const totalScore = geebm;
@@ -161,18 +170,21 @@ exports.calculateWisdomMonthlyScores = (year, month, W, WCP, EDU, C, T, FT, DO, 
         EDU: (filteredEDU * 100), C: (filteredC * 100), T: (filteredT * 100),
         DO: (filteredDO * 100), STB: (filteredSTB),
         FT: (filteredFT * 100),
+        PRO: (filteredPRO * 100), FO: (filteredFO * 100), SU: (filteredSU * 100),
         wCodes: filteredWCodes, wcpCodes: filteredWCPCodes,
         eduCodes: filteredEDUCodes, cCodes: filteredCCodes, tCodes: filteredTCodes,
         doCodes: filteredDOCodes,
         ftCodes: filteredFTCodes,
+        proCodes: filteredPROCodes, foCodes: filteredFOCodes, suCodes: filteredSUCodes,
         eachW: filteredWEach, eachWCP: filteredWCPEach,
         eachEDU: filteredEDUEach, eachC: filteredCEach, eachT: filteredTEach,
         eachDO: filteredDOEach,
         eachFT: filteredFTEach,
+        eachPRO: filteredPROEach, eachFO: filteredFOEach, eachSU: filteredSUEach,
     };
 }
 
-exports.calculateWisdomTotalScore = (W, WCP, EDU, C, T, DO, FT, TMS, STB, STD, start, end) => {
+exports.calculateWisdomTotalScore = (W, WCP, EDU, C, T, DO, FT, TMS, STB, STD, PRO, FO, SU, start, end) => {
     const filteredW = W.filter(test => test.formDate !== null && test.formDate >= start && test.formDate < end);
     const filteredWCP = WCP.filter(test => test.formDate !== null && test.formDate >= start && test.formDate < end);
     const filteredTMS = TMS.filter(test => test.start_date !== null && test.start_date >= start && test.start_date < end);
@@ -182,6 +194,9 @@ exports.calculateWisdomTotalScore = (W, WCP, EDU, C, T, DO, FT, TMS, STB, STD, s
     const filteredDO = DO.filter(test => test.formDate !== null && test.formDate >= start && test.formDate < end);
     const filteredFT = FT.filter(test => test.formDate !== null && test.formDate >= start && test.formDate < end);
     const filtereSTB = STB.filter(test => test.behavior_date !== null && test.behavior_date >= start && test.behavior_date < end);
+    const filteredPRO = PRO.filter(test => test.formDate !== null && test.formDate >= start && test.formDate < end);
+    const filteredFO = FO.filter(test => test.formDate !== null && test.formDate >= start && test.formDate < end);
+    const filteredSU = SU.filter(test => test.formDate !== null && test.formDate >= start && test.formDate < end);
     
     const wScore = avg(filteredW);
     const tmsScore = filteredTMS.length !== 0 ? calculateTaskAverage(filteredTMS) : 0;
@@ -192,11 +207,14 @@ exports.calculateWisdomTotalScore = (W, WCP, EDU, C, T, DO, FT, TMS, STB, STD, s
     const doScore = avg(filteredDO);
     const stbScore = (filtereSTB.length !== 0 && STD.lenght !== 0) ? 100 - ((filtereSTB.length / STD.length) * 100) : 100;
     const ftScore = avg(filteredFT);
+    const proScore = avg(filteredPRO);
+    const foScore = avg(filteredFO);
+    const suScore = avg(filteredSU);
     
     const eebm = (wScore * 40) + (tmsScore * 0.4) + (wcpScore * 20);
     const epbm = (eduScore * 33) + (cScore * 33) + (tScore * 33);
     const odbm = (doScore * 25) + (stbScore * 0.25) + (0) + (0);
-    const apbm = (0) + (0) + (0);
+    const apbm = (proScore * 33) + (foScore * 33) + (suScore * 33);
     const tqbm = (ftScore) + (0) + (0);
     const geebm = (eebm * 0.2) + (epbm * 0.2) + (odbm * 0.2) + (apbm * 0.2) + (tqbm * 0.2);
     return {
@@ -209,6 +227,9 @@ exports.calculateWisdomTotalScore = (W, WCP, EDU, C, T, DO, FT, TMS, STB, STD, s
         avgDO: doScore,
         avgSTB: stbScore,
         avgFT: ftScore,
+        avgPRO: proScore,
+        avgFO: foScore,
+        avgSU: suScore,
         totalEEBM: eebm,
         totalEPBM: epbm,
         totalODBM: odbm,

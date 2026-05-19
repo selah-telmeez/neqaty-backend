@@ -325,7 +325,7 @@ exports.fetchDashboardQuizTest = async (year, students, teachers, fromDate, toDa
 
     // fetch Student Quizes and test's data related to selected organizations
     const quizesTests = await db.QuizTest.findAll({
-        attributes: ['student_id', 'teacher_id', 'createdAt'],
+        attributes: ['student_id', 'teacher_id', 'createdAt', 'result'],
         include: [
             {
                 model: db.QuizzesTestsTemplate,

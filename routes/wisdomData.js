@@ -9,6 +9,7 @@ router.get("/classrooms", wisdomController.getClassRooms);
 router.get("/specializations", wisdomController.getSpecializations);
 router.get("/subjects", wisdomController.getSubjects);
 router.get("/classes", wisdomController.getClasses);
+router.get("/departments", wisdomController.getDepartment);
 router.get("/gradebooks/:template_id", wisdomController.getGradebookScores);
 
 module.exports = router;
