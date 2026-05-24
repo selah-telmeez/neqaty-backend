@@ -27,15 +27,6 @@ module.exports = (sequelize, DataTypes) => {
             },
             onDelete: 'RESTRICT'
         },
-        subject_id: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'subjects',
-                key: 'id',
-            },
-            onDelete: 'RESTRICT'
-        },
         department_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -62,11 +53,16 @@ module.exports = (sequelize, DataTypes) => {
         Teacher.hasMany(models.QuizTest, { foreignKey: 'teacher_id', as: 'quizzes' });
         Teacher.hasMany(models.Session, { foreignKey: 'teacher_id', as: 'sessions' });
         Teacher.belongsTo(models.Employee, { foreignKey: 'employee_id', as: 'employee' });
-        Teacher.belongsTo(models.Subject, { foreignKey: 'subject_id', as: 'subject' });
         Teacher.belongsTo(models.Department, { foreignKey: 'department_id', as: 'department' });
         Teacher.hasMany(models.TeacherSessionHistory, { foreignKey: 'teacher_id', as: 'history' });
         Teacher.hasMany(models.TeacherLatness, { foreignKey: 'teacher_id', as: 'lateness' });
         Teacher.hasMany(models.TeacherEvaluation, { foreignKey: 'teacher_id', as: 'evaluation' });
+        Teacher.belongsToMany(models.Subject, {
+            through: models.TeacherSubject,
+            foreignKey: 'teacher_id',
+            otherKey: 'subject_id',
+            as: 'subjects',
+        });
     };
 
     return Teacher;

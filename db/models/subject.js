@@ -32,11 +32,16 @@ module.exports = (sequelize, DataTypes) => {
     Subject.associate = (models) => {
         Subject.hasMany(models.Curriculum, { foreignKey: 'subject_id', as: 'curriculums' });
         Subject.hasMany(models.SubjectSpecialization, { foreignKey: 'subject_id', as: 'specializations' });
-        Subject.hasMany(models.Teacher, { foreignKey: 'subject_id', as: 'teachers' });
         Subject.hasMany(models.QuizzesTestsTemplate, { foreignKey: 'subject_id', as: 'quizzes' });
         Subject.belongsTo(models.SubjectFormCategory, {
             foreignKey: "category_id",
             as: "category",
+        });
+        Subject.belongsToMany(models.Teacher, {
+            through: models.TeacherSubject,
+            foreignKey: 'subject_id',
+            otherKey: 'teacher_id',
+            as: 'teachers',
         });
     };
 

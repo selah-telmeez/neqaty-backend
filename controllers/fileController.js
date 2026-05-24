@@ -168,7 +168,7 @@ exports.viewFiles = async (req, res) => {
                       attributes: ["id", "Name"],
                     }, {
                       model: Subject,
-                      as: "subject",
+                      as: "subjects",
                       required: false,
                       attributes: ["id", "name"],
                     },

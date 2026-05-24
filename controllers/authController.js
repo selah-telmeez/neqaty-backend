@@ -145,9 +145,10 @@ const login = async (req, res) => {
           include: [
             {
               model: Subject,
-              as: "subject",
+              as: "subjects",
               required: false,
               attributes: ["id", "name"],
+              through: { attributes: [] },
               include: {
                 model: SubjectFormCategory,
                 as: "category",
@@ -257,10 +258,11 @@ const login = async (req, res) => {
       systems: userRole.id === 33 ? [{ name: "PE" }] : organization.systems,
     };
 
-    // based on the type of the user attach the related data to the response object 
+    // based on the type of the user attach the related data to the response object
+    console.log(teacher) 
     if (department) response.department_id = department.id;
     if (student) response.student_specialization = student.specialization;
-    if (teacher) response.teacher_subject = teacher.subject;
+    if (teacher) response.teacher_subject = teacher.subjects;
     if (teacher) response.teacher_class = teacher.sessions;
     if (employee) {
       response.employee_id = employee.id;
@@ -294,7 +296,7 @@ const signup = async (req, res) => {
       emp_role_id,
       password,
       planned_sessions,
-      subject_id,
+      subject_ids,
       department_id,
       class_id,
       specialization_id,
@@ -386,25 +388,26 @@ const signup = async (req, res) => {
         );
 
         let teacher = null;
+        let subjects = null;
         if (
           Role.title === "Teacher" ||
           Role.title === "Head of Department (HOD)"
         ) {
-          if (!planned_sessions || !subject_id || !department_id) {
+          if (!planned_sessions || subject_ids.length > 0 || !department_id) {
             throw new Error("Missing teacher details");
           }
           teacher = await Teacher.create(
             {
               planned_sessions,
               employee_id: employee.id,
-              subject_id,
               department_id,
             },
             { transaction }
           );
+          subjects = await teacher.addSubjects(subject_ids, { transaction });
         }
 
-        return { user, employee, teacher: teacher || null };
+        return { user, employee, teacher: teacher || null, subjects: subjects || null };
       }
     });
 
@@ -717,7 +720,6 @@ const adminLogin = async (req, res) => {
       return res.status(401).json({ message: "invalid user_id" });
     }
     const employee = await Employee.findOne({ where: { user_id: Admin.user_id } });
-    console.log()
 
     const isMatch = await comparePassword(password, Admin.password);
     if (!isMatch) {
