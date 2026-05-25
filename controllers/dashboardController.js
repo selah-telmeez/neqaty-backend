@@ -2048,7 +2048,14 @@ exports.watomsCROScore = async (req, res) => {
         });
 
         const trainers = await db.Teacher.findAll({
-            attributes: ["id", "employee_id", "subject_id"],
+            attributes: ["id", "employee_id"],
+            include: [
+                {
+                    model: db.Subject,
+                    ass: "subjects",
+                    attributes: ["id"]
+                }
+            ],
             raw: true
         });
 
@@ -2140,7 +2147,9 @@ exports.watomsCROScore = async (req, res) => {
                     const emp = orgEmployees.find(e => e.user_id === parseInt(assesseeId));
                     const fullName = [emp?.first_name, emp?.middle_name, emp?.last_name].filter(Boolean).join(" ") || "Unknown Employee";
                     const trainer = trainers.find(e => e.employee_id === Number(emp.id));
-                    const subject = subjects.find(e => e.id === trainer.subject_id);
+                    const subject = subjects.find(subject =>
+                        trainer.subjects.some(s => s.id === subject.id)
+                    );
                     const auth = await db.Authority.findOne({
                         include: [
                             {
@@ -2253,7 +2262,14 @@ exports.wisdomCROScore = async (req, res) => {
         });
 
         const trainers = await db.Teacher.findAll({
-            attributes: ["id", "employee_id", "subject_id"],
+            attributes: ["id", "employee_id"],
+            include: [
+                {
+                    model: db.Subject,
+                    as: "subjects",
+                    attributes: ["id"]
+                }
+            ],
             raw: true
         });
 
@@ -2345,7 +2361,9 @@ exports.wisdomCROScore = async (req, res) => {
                     const emp = orgEmployees.find(e => e.user_id === parseInt(assesseeId));
                     const fullName = [emp?.first_name, emp?.middle_name, emp?.last_name].filter(Boolean).join(" ") || "Unknown Employee";
                     const trainer = trainers.find(e => e.employee_id === Number(emp.id));
-                    const subject = subjects.find(e => e.id === trainer.subject_id);
+                    const subject = subjects.find(subject =>
+                        trainer.subjects.some(s => s.id === subject.id)
+                    );
                     const auth = await db.Authority.findOne({
                         include: [
                             {
@@ -3982,7 +4000,7 @@ exports.getProjectUnitsRanking = async (req, res) => {
             // Try to get additional real data
             const specializations = await db.Specialization.count({ where: { deleted: false } }) || Math.max(1, Math.floor(teachers / 3));
             const departments = await db.Department.count({ where: { organization_id: organizationId, deleted: false } }) || Math.max(1, Math.floor(employees / 10));
-            const subjects = await db.Subject.count({ where: { deleted: false } }) || Math.max(1, Math.floor(teachers / 2));
+            // const subjects = await db.Subject.count({ where: { deleted: false } }) || Math.max(1, Math.floor(teachers / 2));
 
             statistics = {
                 students: students,

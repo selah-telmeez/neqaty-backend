@@ -316,13 +316,18 @@ exports.fetchDashboardGeneralInfoData = async (systemId) => {
     })
 
     const teachers = await db.Teacher.findAll({
-        attributes: ['id', 'employee_id', 'subject_id'],
+        attributes: ['id', 'employee_id'],
         include: [
             {
                 model: db.Employee,
                 as: "employee",
                 where: { organization_id: { [Op.in]: organizationIds } },
                 attributes: []
+            },
+            {
+                model: db.Subject,
+                as: "subjects",
+                attributes: ["id"]
             }
         ],
         raw: true

@@ -405,11 +405,12 @@ const getTeachers = async (req, res) => {
                 {
                     model: Employee,
                     as: 'employee',
-                    attributes: ['first_name', 'middle_name', 'last_name', 'image_path', 'gender'],
+                    // attributes: ['first_name', 'middle_name', 'last_name', 'image_path', 'gender'],
+                    attributes: ['first_name', 'middle_name', 'last_name'],
                 },
                 {
                     model: Subject,
-                    as: 'subject',
+                    as: 'subjects',
                     attributes: ['name'],
                 },
             ],
