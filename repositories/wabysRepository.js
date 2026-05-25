@@ -49,9 +49,9 @@ exports.fetchDashboardData = async (year, systemId, stage, subject, specializati
     // fetch teachers' data related to all related organizations
     const teacherWhere = {};
 
-    if (subject !== "All" && Number.isFinite(Number(subject))) {
-        teacherWhere.subject_id = Number(subject);
-    }
+    // if (subject !== "All" && Number.isFinite(Number(subject))) {
+    //     teacherWhere.subject_id = Number(subject);
+    // }
 
     const teachers = await db.Teacher.findAll({
         attributes: ['id', 'employee_id', 'planned_sessions', 'actual_sessions'],
