@@ -17,7 +17,8 @@ const {
   SubjectFormCategory,
   Session,
   System,
-  PeCandidate
+  PeCandidate,
+  Parent
 } = require("../db/models");
 const { comparePassword, hashPassword } = require("../utils/hashPassword");
 require("dotenv").config();
@@ -116,9 +117,10 @@ const login = async (req, res) => {
     let student = null;
     let teacher = null;
     let candidate = null;
+    let parent = null;
 
     // check if the user's role is not a student
-    if (userRole.title !== "Student" && userRole.title !== "PE Candidate") {
+    if (userRole.title !== "Student" && userRole.title !== "PE Candidate" && userRole.title !== "Parent") {
       // check if the user is listed in employees' table
       employee = await Employee.findOne({ where: { user_id: user.id } });
       if (employee) {
@@ -187,6 +189,26 @@ const login = async (req, res) => {
         });
       };
       // if the user is a student
+    } else if (userRole.title === "Parent") {
+      parent = await Parent.findOne({
+        include: [
+          {
+            model: Student,
+            as: 'student',
+            include: [
+              { model: Class, as: 'class', attributes: ['id', 'name'] },
+              { model: Specialization, as: 'specialization', attributes: ['id', 'name'] },
+              {
+                model: Organization,
+                as: 'school',
+                attributes: ['id', 'name', 'city', 'location'],
+              },
+            ],
+          },
+        ],
+        where: { user_id: user.id }
+      });
+      // if the user is a student
     } else {
       // check if the user is in students table
       student = await Student.findOne({
@@ -239,9 +261,16 @@ const login = async (req, res) => {
     }
 
     // create token to the user
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      {
+        id: user.id,
+        student: parent ? parent.student : null,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
 
     // attach the needed data to the response object
     const response = {
@@ -250,16 +279,15 @@ const login = async (req, res) => {
       code: user.code,
       name: employee
         ? `${employee.first_name} ${employee.middle_name} ${employee.last_name}` :
-        candidate ? `${candidate.name}` :
+        candidate ? `${candidate.name}` : parent ? null :
           `${student.first_name} ${student.middle_name} ${student.last_name}`,
       user_role: userRole.title,
       token,
-      organization_id: organization.id,
-      systems: userRole.id === 33 ? [{ name: "PE" }] : organization.systems,
+      organization_id: parent ? null : organization.id,
+      systems: userRole.id === 33 ? [{ name: "PE" }] : userRole.id === 39 ? [{ name: "Parent" }] : organization.systems,
     };
 
     // based on the type of the user attach the related data to the response object
-    console.log(teacher) 
     if (department) response.department_id = department.id;
     if (student) response.student_specialization = student.specialization;
     if (teacher) response.teacher_subject = teacher.subjects;
@@ -270,6 +298,13 @@ const login = async (req, res) => {
       response.email = employee.email;
     }
     if (student) response.email = student.email;
+    if (parent) response.student = {
+      id: parent.student.id,
+      name: `${parent.student.first_name} ${parent.student.middle_name} ${parent.student.last_name}`.trim(),
+      class: parent.student.class,
+      specialization: parent.student.specialization,
+      school: parent.student.school_id
+    }
 
     // return the response
     res.status(200).json(response);

@@ -90,7 +90,7 @@ const parentLogin = async (req, res) => {
 // GET /api/v1/parents/attendance
 const getAttendance = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
 
         const attendance = await studentAttendance.findAll({
             where: { student_id, deleted: false },
@@ -108,8 +108,7 @@ const getAttendance = async (req, res) => {
 // GET /api/v1/parents/grades
 const getGrades = async (req, res) => {
     try {
-        const { student_id } = req.parent;
-
+        const student_id = req.user.student.id;
         const grades = await QuizTest.findAll({
             where: { student_id, deleted: false },
             include: [
@@ -146,7 +145,7 @@ const getGrades = async (req, res) => {
 // GET /api/v1/parents/grades/monthly
 const getGradesMonthlyProgress = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
         const { sequelize } = db;
 
         const monthlyData = await QuizTest.findAll({
@@ -173,7 +172,7 @@ const getGradesMonthlyProgress = async (req, res) => {
 // GET /api/v1/parents/behaviors
 const getBehaviors = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
 
         // Get student's user_id first
         const student = await Student.findOne({ where: { id: student_id }, attributes: ['user_id'] });
@@ -198,7 +197,7 @@ const getBehaviors = async (req, res) => {
 // GET /api/v1/parents/evaluations
 const getTeacherEvaluations = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
 
         // Get the student's class to find related teachers
         const student = await Student.findOne({
@@ -255,7 +254,7 @@ const getTeacherEvaluations = async (req, res) => {
 // GET /api/v1/parents/supervisor-notes
 const getSupervisorNotes = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
 
         // Get student's school
         const student = await Student.findOne({ where: { id: student_id }, attributes: ['school_id'] });
@@ -290,7 +289,7 @@ const getSupervisorNotes = async (req, res) => {
 // GET /api/v1/parents/news
 const getSchoolNews = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
 
         // Get student's school
         const student = await Student.findOne({ where: { id: student_id }, attributes: ['school_id'] });
@@ -311,7 +310,7 @@ const getSchoolNews = async (req, res) => {
 // GET /api/v1/parents/profile
 const getStudentProfile = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
 
         const student = await Student.findOne({
             where: { id: student_id, deleted: false },
@@ -348,7 +347,7 @@ const getStudentProfile = async (req, res) => {
 // GET /api/v1/parents/points
 const getStudentPoints = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
 
         const student = await Student.findOne({ where: { id: student_id }, attributes: ['user_id'] });
         if (!student) return res.status(404).json({ message: 'Student not found' });
@@ -388,7 +387,7 @@ const getStudentPoints = async (req, res) => {
 // GET /api/v1/parents/teachers
 const getTeachers = async (req, res) => {
     try {
-        const { student_id } = req.parent;
+        const student_id = req.user.student.id;
 
         const student = await Student.findOne({ where: { id: student_id }, attributes: ['class_id'] });
         if (!student) return res.status(404).json({ message: 'Student not found' });

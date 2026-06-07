@@ -6,15 +6,17 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true,
             type: DataTypes.INTEGER,
         },
-        username: {
-            type: DataTypes.STRING,
+
+        user_id: {
+            type: DataTypes.INTEGER,
             allowNull: false,
-            unique: true,
+            references: {
+                model: 'users',
+                key: 'id',
+            },
+            onDelete: 'RESTRICT',
         },
-        password: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
+
         student_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -24,10 +26,12 @@ module.exports = (sequelize, DataTypes) => {
             },
             onDelete: 'RESTRICT',
         },
+
         deleted: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
+
         deletedAt: {
             type: DataTypes.DATE,
         },
@@ -39,7 +43,15 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Parent.associate = (models) => {
-        Parent.belongsTo(models.Student, { foreignKey: 'student_id', as: 'student' });
+        Parent.belongsTo(models.Student, {
+            foreignKey: 'student_id',
+            as: 'student',
+        });
+
+        Parent.belongsTo(models.User, {
+            foreignKey: 'user_id',
+            as: 'user',
+        });
     };
 
     return Parent;

@@ -70,6 +70,7 @@ module.exports = (sequelize, DataTypes) => {
       as: 'managers_surveys',
     });
     User.hasMany(models.Incident, { foreignKey: 'user_id', as: 'incident' });
+    User.hasOne(models.Parent, { foreignKey: "user_id", as: "parent" });
   };
 
   return User;
