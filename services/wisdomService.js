@@ -176,6 +176,8 @@ exports.getWisdomDashboardData = async (year, stage, subject, specialization, fr
 
         acc[template.id].scores.push({
           student_id: plainItem.student_id,
+          assessorName: 1,
+          ReportedData: 2,
           teacher_id: plainItem.teacher_id,
           result: plainItem.result / 100
         });
@@ -448,7 +450,7 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
 
     const academicPrinciple = relatedEmployees.filter(emp => emp.role_id === 3);
     const exectiveManager = relatedEmployees.filter(emp => emp.role_id === 4);
-    const admins = relatedEmployees.filter(emp => emp.role_id === 30);
+    const admins = relatedEmployees.filter(emp => emp.role_id !== 1 && emp.role_id !== 2);
 
     const relatedStudents = generalInfo.students.filter(
       std => std.school_id === school.id
