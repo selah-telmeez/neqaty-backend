@@ -17,15 +17,15 @@ const {
 const { authMiddleware } = require("../middleware/authMiddleware");
 
 router.post('/login', parentLogin);
-router.get('/attendance', authMiddleware, getAttendance);
-router.get('/grades', authMiddleware, getGrades);
-router.get('/grades/monthly', authMiddleware, getGradesMonthlyProgress);
-router.get('/behaviors', authMiddleware, getBehaviors);
-router.get('/evaluations', authMiddleware, getTeacherEvaluations);
-router.get('/supervisor-notes', authMiddleware, getSupervisorNotes);
-router.get('/news', authMiddleware, getSchoolNews);
-router.get('/points', authMiddleware, getStudentPoints);
-router.get('/teachers', authMiddleware, getTeachers);
-router.get('/profile', authMiddleware, getStudentProfile);
+router.get('/attendance/:studentId', authMiddleware, getAttendance);
+router.get('/grades/:studentId', authMiddleware, getGrades);
+router.get('/grades/monthly/:studentId', authMiddleware, getGradesMonthlyProgress);
+router.get('/behaviors/:studentId', authMiddleware, getBehaviors);
+router.get('/evaluations/:studentId', authMiddleware, getTeacherEvaluations);
+router.get('/supervisor-notes/:studentId', authMiddleware, getSupervisorNotes);
+router.get('/news/:studentId', authMiddleware, getSchoolNews);
+router.get('/points/:studentId', authMiddleware, getStudentPoints);
+router.get('/teachers/:studentId', authMiddleware, getTeachers);
+router.get('/profile/:studentId', authMiddleware, getStudentProfile);
 
 module.exports = router;

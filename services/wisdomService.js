@@ -151,6 +151,9 @@ exports.getWisdomDashboardData = async (year, stage, subject, specialization, fr
     const relatedSTA = dashboard.studentsAttendance.filter(sta => relatedStdIds.includes(sta.student_id));
     const attendedCount = relatedSTA.filter(s => s.status === 'attend').length;
     const allStudentsAttendance = relatedSTA.length > 0 ? (attendedCount / relatedSTA.length) * 100 : 0;
+    const relatedSSTA = dashboard.seniorStudentsAttendance.filter(sta => relatedStdIds.includes(sta.student_id));
+    const attendedSeniorCount = relatedSSTA.filter(s => s.status === 'attend').length;
+    const allSeniorStudentsAttendance = relatedSSTA.length > 0 ? (attendedSeniorCount / relatedSSTA.length) * 100 : 0;
     const currentTeacherSessions = relatedTeachers.map(teacher => (teacher.actual_sessions / teacher.planned_sessions) * 100);
     const currentAvgSessions = currentTeacherSessions.length === 0 ? 0 : currentTeacherSessions.reduce((sum, v) => sum + v, 0) / currentTeacherSessions.length;
     const relatedQuizesTests = wisdomQuizTest.filter(quiz => quiz.template.organization_id === school.id)
@@ -257,6 +260,7 @@ exports.getWisdomDashboardData = async (year, stage, subject, specialization, fr
       monthlyTotals[i].ODBM.STB.avgScore += r.STB;
       monthlyTotals[i].TQBM.totalTQBM += r.tqbm;
       monthlyTotals[i].TQBM.FT.avgScore += r.FT;
+      monthlyTotals[i].TQBM.TG.avgScore += allSeniorStudentsAttendance;
       monthlyTotals[i].ODBM.STA.avgScore += allStudentsAttendance;
       monthlyTotals[i].APBM.totalAPBM += r.apbm;
       monthlyTotals[i].APBM.PRO.avgScore += r.PRO;
@@ -287,6 +291,7 @@ exports.getWisdomDashboardData = async (year, stage, subject, specialization, fr
       const ODBMSTB = monthlyTotals[i].count ? roundNumber(monthlyTotals[i].ODBM.STB.avgScore / monthlyTotals[i].count) : 0;
       const TQBM = monthlyTotals[i].count ? roundNumber(monthlyTotals[i].TQBM.totalTQBM / monthlyTotals[i].count) : 0;
       const TQBMFT = monthlyTotals[i].count ? roundNumber(monthlyTotals[i].TQBM.FT.avgScore / monthlyTotals[i].count) : 0;
+      const TQBMTG = monthlyTotals[i].count ? roundNumber(monthlyTotals[i].TQBM.TG.avgScore / monthlyTotals[i].count) : 0;
       const ODBMSTA = monthlyTotals[i].count ? roundNumber(monthlyTotals[i].ODBM.STA.avgScore / monthlyTotals[i].count) : 0;
       const ODBMSessions = (currentAvgSessions && m === endMonth) ? roundNumber(currentAvgSessions / monthlyTotals[i].count) : 0;
       const APBM = monthlyTotals[i].count ? roundNumber(monthlyTotals[i].APBM.totalAPBM / monthlyTotals[i].count) : 0;
@@ -303,7 +308,7 @@ exports.getWisdomDashboardData = async (year, stage, subject, specialization, fr
         EEBM: { totalEEBM: EEBM, W: { avgScore: EEBMW }, WCP: { avgScore: EEBMWCP }, TMS: { avgScore: EEBMTMS } },
         EPBM: { totalEPBM: EPBM, EDU: { avgScore: EPBMEDU }, C: { avgScore: EPBMC }, T: { avgScore: EPBMT } },
         ODBM: { totalODBM: ODBM, DO: { avgScore: ODBMDO }, STB: { avgScore: ODBMSTB }, STA: { avgScore: ODBMSTA }, sessions: { avgScore: ODBMSessions } },
-        TQBM: { totalTQBM: TQBM, FT: { avgScore: TQBMFT } },
+        TQBM: { totalTQBM: TQBM, FT: { avgScore: TQBMFT }, TG: { avgScore: TQBMTG } },
         APBM: { totalAPBM: APBM, PRO: { avgScore: APBMPRO }, FO: { avgScore: APBMFO }, SU: { avgScore: APBMSU } },
         GEEBM: { totalGEEBM: GEEBM, ODBM: roundNumber(ODBM * 0.2), APBM: roundNumber(APBM * 0.2), TQBM: roundNumber(TQBM * 0.2), EEBM: roundNumber(EEBM * 0.2) },
         color: '#ef4444'
@@ -340,6 +345,7 @@ exports.getWisdomDashboardData = async (year, stage, subject, specialization, fr
       const ODBMSessions = m === endMonth ? roundNumber(currentAvgSessions || 0) : 0;
       const TQBM = roundNumber(currentMonthData.tqbm || 0);
       const TQBMFT = roundNumber(currentMonthData.FT || 0);
+      const TQBMTG = roundNumber(allSeniorStudentsAttendance || 0);
       const APBM = roundNumber(currentMonthData.apbm || 0);
       const APBMPRO = roundNumber(currentMonthData.PRO || 0);
       const APBMFO = roundNumber(currentMonthData.FO || 0);
@@ -371,6 +377,7 @@ exports.getWisdomDashboardData = async (year, stage, subject, specialization, fr
         TQBM: {
           totalTQBM: TQBM,
           FT: { avgScore: TQBMFT, codeScores: currentMonthData.ftCodes, scores: currentMonthData.eachFT, no_of_forms: currentMonthData.eachFT.length },
+          TG: { avgScore: TQBMTG },
         },
         APBM: {
           totalAPBM: APBM,

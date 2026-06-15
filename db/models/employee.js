@@ -58,6 +58,36 @@ module.exports = (sequelize, DataTypes) => {
             },
             onDelete: 'RESTRICT'
         },
+        id_number: {
+            type: DataTypes.STRING,
+        },
+        birth_place: {
+            type: DataTypes.STRING,
+        },
+        sex: {
+            type: DataTypes.STRING,
+        },
+        religion: {
+            type: DataTypes.STRING,
+        },
+        phone_number: {
+            type: DataTypes.STRING,
+        },
+        financial_job_level: {
+            type: DataTypes.STRING,
+        },
+        qualitative_group: {
+            type: DataTypes.STRING,
+        },
+        appointment_date: {
+            type: DataTypes.DATEONLY,
+        },
+        date_of_receipt_of_current_work: {
+            type: DataTypes.DATEONLY,
+        },
+        contract_type: {
+            type: DataTypes.STRING,
+        },
         deleted: {
             type: DataTypes.BOOLEAN,
             defaultValue: false

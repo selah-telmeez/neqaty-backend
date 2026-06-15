@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const upload = require("../middleware/uploadMiddleware");
 const usersController = require("../controllers/usersController");
+const { authenticateToken } = require("../middleware/authMiddleware");
 
 router.get("/school/employees", usersController.viewSchoolEmployees);
 router.get("/vtc/employees", usersController.viewVtcEmployees);
@@ -22,5 +23,6 @@ router.get("/students/behavior/categories", usersController.viewBehaviorCategori
 router.post("/checkinout", usersController.checkInOut);
 router.get("/checkinout/view", usersController.viewCheckInOut);
 router.post("/addWaitingList", usersController.addWaitingListUser);
+router.get("/employee-data/:user_id", authenticateToken, usersController.viewEmployeeData);
 
 module.exports = router;

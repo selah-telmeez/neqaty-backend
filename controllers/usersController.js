@@ -17,7 +17,8 @@ const {
   studentBehaviorCategory,
   studentBehavior,
   EmployeeCheckInOut,
-  WaitingList
+  WaitingList,
+  EmployeeRole
 } = require("../db/models");
 const path = require("path");
 
@@ -556,5 +557,36 @@ exports.addWaitingListUser = async (req, res) => {
   } catch (error) {
     console.error("Sequelize Error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.viewEmployeeData = async (req, res) => {
+  try {
+    const user_id = req.params.user_id
+
+    const employee = await Employee.findOne({
+      where: {
+        deleted: false,
+        user_id,
+      },
+      include: [
+        { model: EmployeeRole, as: "role" },
+        { model: Organization, as: "organization" },
+        { model: User, as: "user" },
+        { model: Teacher, as: "teacher" },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: employee,
+    });
+  } catch (error) {
+    console.error("viewEmployeeData error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch employee data",
+    });
   }
 };

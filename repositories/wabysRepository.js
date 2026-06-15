@@ -149,7 +149,33 @@ exports.fetchDashboardData = async (year, systemId, stage, subject, specializati
         raw: true
     });
 
+    const seniorClassInclude = {
+        ...classInclude,
+        where: {
+            ...(classInclude.where || {}),
+            stage_id: 3
+        }
+    };
+
+    const seniorStudents = await db.Student.findAll({
+        attributes: [
+            'id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'user_id',
+            'school_id'
+        ],
+        where: studentWhere,
+        include: [
+            seniorClassInclude,
+            specializationInclude
+        ],
+        raw: true
+    });
+
     const studentIds = students.map(s => s.id);
+    const seniorStudentIds = seniorStudents.map(s => s.id);
     const studentUserIds = students.map(s => s.user_id);
 
     // combined users if employees and students
@@ -234,6 +260,17 @@ exports.fetchDashboardData = async (year, systemId, stage, subject, specializati
         raw: true
     });
 
+    const seniorStudentsAttendance = await db.studentAttendance.findAll({
+        attributes: ['status', 'student_id', 'createdAt'],
+        where: {
+            student_id: { [Op.in]: seniorStudentIds },
+            createdAt: {
+                [Op.between]: [startOfYear, endOfYear]
+            }
+        },
+        raw: true
+    });
+
     // fetch Students Behavior's data related to selected organizations
     const studentsBehavior = await db.studentBehavior.findAll({
         attributes: ['id', 'offender_id', 'behavior_date'],
@@ -285,7 +322,7 @@ exports.fetchDashboardData = async (year, systemId, stage, subject, specializati
         allCurriculumResults, allIndividualResults, allEnvironmentResults,
         allCurriculumReports, allIndividualReports, allEnvironmentReports,
         forms, fields, subFields, questions,
-        studentsAttendance, studentsBehavior, tasks, teachersEvaluation
+        studentsAttendance, seniorStudentsAttendance, studentsBehavior, tasks, teachersEvaluation
     };
 };
 
@@ -1011,6 +1048,7 @@ exports.fetchSystemRelatedTeachersOrTrainers = async (systemId) => {
         include: [
             {
                 model: db.Employee,
+                required: true,
                 as: "employee",
                 include: [
                     {
@@ -1030,7 +1068,14 @@ exports.fetchSystemRelatedTeachersOrTrainers = async (systemId) => {
                         ],
                     },
                 ],
-            }
+            },
+            {
+                model: db.Subject,
+                as: "subjects",
+                required: true,
+                attributes: ["id"],
+                through: { attributes: [] },
+            },
         ],
         distinct: true,
         order: [["createdAt", "DESC"]],
