@@ -514,6 +514,9 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
       studentsBySpecializationMap.get(specializationId).students.push(student);
     }
 
+    const relatedWorkShops = generalInfo.classRooms.filter(classroom => classroom.room_type === 'workshop' && classroom.organization_id === Number(school?.id));
+    const relatedLabs = generalInfo.classRooms.filter(classroom => classroom.room_type === 'lab' && classroom.organization_id === Number(school?.id));
+
     const groupedStudents = Array.from(studentsBySpecializationMap.values());
     // store per school
     result[school.id] = {
@@ -523,8 +526,8 @@ exports.getWisdomDashboardGeneralInfoData = async () => {
       admins,
       teachers: groupedTeachers,
       students: groupedStudents,
-      workshops: relatedSchool?.no_of_workshops || 0,
-      labs: relatedSchool?.no_of_labs || 0,
+      workshops: relatedWorkShops || [],
+      labs: relatedLabs || [],
       classes: relatedSchool?.no_of_classes || 0
     };
 

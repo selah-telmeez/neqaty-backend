@@ -18,7 +18,8 @@ const {
   studentBehavior,
   EmployeeCheckInOut,
   WaitingList,
-  EmployeeRole
+  EmployeeRole,
+  Specialization
 } = require("../db/models");
 const path = require("path");
 
@@ -587,6 +588,37 @@ exports.viewEmployeeData = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch employee data",
+    });
+  }
+};
+
+exports.viewStudentData = async (req, res) => {
+  try {
+    const user_id = req.params.user_id
+
+    const student = await Student.findOne({
+      where: {
+        deleted: false,
+        user_id,
+      },
+      include: [
+        { model: Organization, as: "school" },
+        { model: User, as: "user" },
+        { model: Class, as: "class" },
+        { model: Specialization, as: "specialization" },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: student,
+    });
+  } catch (error) {
+    console.error("viewStudentData error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch student data",
     });
   }
 };

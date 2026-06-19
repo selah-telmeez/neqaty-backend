@@ -24,5 +24,6 @@ router.post("/checkinout", usersController.checkInOut);
 router.get("/checkinout/view", usersController.viewCheckInOut);
 router.post("/addWaitingList", usersController.addWaitingListUser);
 router.get("/employee-data/:user_id", authenticateToken, usersController.viewEmployeeData);
+router.get("/student-data/:user_id", authenticateToken, usersController.viewStudentData);
 
 module.exports = router;

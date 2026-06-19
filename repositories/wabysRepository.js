@@ -413,8 +413,16 @@ exports.fetchDashboardGeneralInfoData = async (systemId) => {
         raw: true
     });
 
+    const classRooms = await db.ClassRoom.findAll({
+        where: {
+            organization_id: {
+                [Op.in]: organizationIds
+            }
+        },
+    });
+
     return {
-        organizations, schools, employees: [...employees, ...teacherEmployees], teachers, students, subjects, specializations
+        organizations, schools, employees: [...employees, ...teacherEmployees], teachers, students, subjects, specializations, classRooms
     };
 };
 

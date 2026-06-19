@@ -2052,7 +2052,7 @@ exports.watomsCROScore = async (req, res) => {
             include: [
                 {
                     model: db.Subject,
-                    ass: "subjects",
+                    as: "subjects",
                     attributes: ["id"]
                 }
             ],
