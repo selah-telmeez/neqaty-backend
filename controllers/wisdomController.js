@@ -301,3 +301,39 @@ exports.getGradebookScores = async (req, res) => {
         });
     }
 };
+
+exports.getRelatedOrgs = async (req, res) => {
+    try {
+        const organizations = await wisdomService.getWisdomOrganizationsData();
+
+        res.status(200).json({
+            status: "success",
+            message: "organizations got fetched successfully",
+            organizations
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
+exports.getTeacherEmployeeDepartments = async (req, res) => {
+    try {
+        const departments = await wisdomService.getWisdomTeacherEmployeeDepartmentsData();
+
+        res.status(200).json({
+            status: "success",
+            message: "departments got fetched successfully",
+            departments
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};

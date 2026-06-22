@@ -18,5 +18,7 @@ router.get("/task/:id", taskController.fetchTask);
 router.get("/ebdaedu/general-info", taskController.ebdaeduGeneralInfo);
 router.get("/wisdom/general-info", taskController.wisdomGeneralInfo);
 router.get("/watoms/general-info", taskController.watomsGeneralInfo);
+router.get("/task-notification/:system", authenticateToken, taskController.taskNotifications);
+router.patch("/task-notification-noted/:system", authenticateToken, taskController.taskNotificationsNoted);
 
 module.exports = router;

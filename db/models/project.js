@@ -26,7 +26,6 @@ module.exports = (sequelize, DataTypes) => {
     Project.associate = (models) => {
         Project.belongsTo(models.Authority, { foreignKey: 'authority_id', as: 'authority' });
         Project.hasMany(models.Program, { foreignKey: 'project_id', as: 'programs' });
-        Project.hasMany(models.Task, { foreignKey: 'project_id', as: 'tasks' });
     };
 
     return Project;

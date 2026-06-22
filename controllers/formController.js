@@ -285,6 +285,7 @@ const fetchAllUsers = async (req, res) => {
             ["middle_name", "employee_middle_name"],
             ["last_name", "employee_last_name"],
             "role_id",
+            "department_id",
             "organization_id",
           ],
           include: [

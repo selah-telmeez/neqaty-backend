@@ -1,6 +1,7 @@
 const { Task, TaskDetail, User, Employee, Organization, Program, Project, Authority, ChatRoom, sequelize } = require("../db/models");
 const path = require("path");
 const monthsArabic = require('../utils/months');
+const { Op } = require("sequelize");
 
 exports.ebdaeduViewTasks = async (req, res) => {
   try {
@@ -195,9 +196,6 @@ exports.assignTask = async (req, res) => {
       reviewer_id,
       manager_id,
       organization_id,
-      project_id,
-      program_id,
-      authority_id,
       system,
     } = req.body;
 
@@ -220,7 +218,7 @@ exports.assignTask = async (req, res) => {
     const requiredFields = {
       title, description, start_date, end_date, importance, size,
       assigner_id, assignee_id, reviewer_id, manager_id,
-      organization_id, project_id, program_id, authority_id, system,
+      organization_id, system,
     };
 
     for (const [key, value] of Object.entries(requiredFields)) {
@@ -251,9 +249,6 @@ exports.assignTask = async (req, res) => {
         manager_id: Number(manager_id),
         file_path,
         organization_id: Number(organization_id),
-        program_id: Number(program_id),
-        project_id: Number(project_id),
-        authority_id: Number(authority_id),
         chat_room_id: chatRoom.id,
         system,
       },
@@ -1311,6 +1306,146 @@ exports.updateTask = async (req, res) => {
     console.error("❌ updateTask Error:", error);
     res.status(500).json({
       status: "error",
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+exports.taskNotifications = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { system } = req.params;
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    const [notificationCount, dueTodayCount, reviewerNotificationCount, managerNotificationCount] = await Promise.all([
+
+      Task.count({
+        where: {
+          assignee_id: userId,
+          notification: true,
+          system,
+          deleted: false,
+        },
+      }),
+
+      Task.count({
+        where: {
+          assignee_id: userId,
+          assignee_status: {
+            [Op.ne]: 100,
+          },
+          system,
+          deleted: false,
+          end_date: {
+            [Op.gte]: todayStart,
+            [Op.lt]: tomorrowStart,
+          },
+        },
+      }),
+
+      Task.count({
+        where: {
+          reviewer_id: userId,
+          reviewer_notification: true,
+          system,
+          deleted: false,
+        },
+      }),
+
+      Task.count({
+        where: {
+          manager_id: userId,
+          manager_notification: true,
+          system,
+          deleted: false,
+        },
+      }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      notificationCount,
+      dueTodayCount,
+      reviewerNotificationCount,
+      managerNotificationCount
+    });
+  } catch (error) {
+    console.error("taskNotifications Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+exports.taskNotificationsNoted = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { system } = req.params;
+
+    const [
+      [assigneeUpdatedCount],
+      [reviewerUpdatedCount],
+      [managerUpdatedCount],
+    ] = await Promise.all([
+      Task.update(
+        { notification: false },
+        {
+          where: {
+            assignee_id: userId,
+            system,
+            notification: true,
+          },
+        }
+      ),
+
+      Task.update(
+        { reviewer_notification: false },
+        {
+          where: {
+            reviewer_id: userId,
+            system,
+            reviewer_notification: true,
+          },
+        }
+      ),
+
+      Task.update(
+        { manager_notification: false },
+        {
+          where: {
+            manager_id: userId,
+            system,
+            manager_notification: true,
+          },
+        }
+      ),
+    ]);
+
+    const updatedCount =
+      assigneeUpdatedCount +
+      reviewerUpdatedCount +
+      managerUpdatedCount;
+
+    res.status(200).json({
+      success: true,
+      updatedCount,
+      assigneeUpdatedCount,
+      reviewerUpdatedCount,
+      managerUpdatedCount,
+      message: `${updatedCount} notifications marked as read`,
+    });
+  } catch (error) {
+    console.error("taskNotificationsNoted Error:", error);
+    res.status(500).json({
+      success: false,
       message: "Server error",
       error: error.message,
     });

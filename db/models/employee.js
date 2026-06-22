@@ -58,6 +58,15 @@ module.exports = (sequelize, DataTypes) => {
             },
             onDelete: 'RESTRICT'
         },
+        department_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'employee_departments',
+                key: 'id',
+            },
+            onDelete: 'RESTRICT'
+        },
         id_number: {
             type: DataTypes.STRING,
         },
@@ -115,6 +124,7 @@ module.exports = (sequelize, DataTypes) => {
         Employee.hasMany(models.WatomsEmployeeDocumentCategory, { foreignKey: 'employee_id' });
         Employee.hasMany(models.ManagerEvaluation, { foreignKey: 'employee_id', as: 'manager_evaluations' });
         Employee.hasMany(models.ManagerComment, { foreignKey: 'employee_id', as: 'employee' });
+        Employee.belongsTo(models.EmployeeDepartment, { foreignKey: 'department_id', as: 'department' });
     };
 
     return Employee;

@@ -11,5 +11,7 @@ router.get("/subjects", wisdomController.getSubjects);
 router.get("/classes", wisdomController.getClasses);
 router.get("/departments", wisdomController.getDepartment);
 router.get("/gradebooks/:template_id", wisdomController.getGradebookScores);
+router.get("/orgs", wisdomController.getRelatedOrgs);
+router.get("/employee-teacher-departments", wisdomController.getTeacherEmployeeDepartments);
 
 module.exports = router;

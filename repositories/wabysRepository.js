@@ -1163,3 +1163,29 @@ exports.fetchSystemRelatedDepartments = async (systemId) => {
         order: [["createdAt", "DESC"]],
     });
 };
+
+exports.fetchRelatedOrganizationsPerSystemData = async (systemId) => {
+    return await db.Organization.findAll({
+        attributes: ["id", "name", "city", "authority_id"],
+        include: [
+            {
+                model: db.System,
+                as: "systems",
+                where: { id: systemId },
+                attributes: [],
+                through: { attributes: [] }
+            }
+        ],
+    });
+};
+
+exports.fetchTeacherEmployeeDepartmentsData = async () => {
+    const employeeDepartments = await db.EmployeeDepartment.findAll({
+        attributes: ["id", "name"],
+    });
+    const teacherDepartments = await db.Department.findAll({
+        attributes: ["id", "Name"],
+    });
+
+    return {employeeDepartments, teacherDepartments}
+};

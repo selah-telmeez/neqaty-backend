@@ -115,32 +115,24 @@ module.exports = (sequelize, DataTypes) => {
             },
             onDelete: 'RESTRICT'
         },
-        project_id: {
-            type: DataTypes.INTEGER,
+        completion_date: {
+            type: DataTypes.DATE,
             allowNull: true,
-            references: {
-                model: 'projects',
-                key: 'id',
-            },
-            onDelete: 'RESTRICT'
         },
-        program_id: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'programs',
-                key: 'id',
-            },
-            onDelete: 'RESTRICT'
+        notification: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
         },
-        authority_id: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'authorities',
-                key: 'id',
-            },
-            onDelete: 'RESTRICT'
+        reviewer_notification: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
+        manager_notification: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
         },
         chat_room_id: {
             type: DataTypes.UUID,
@@ -174,9 +166,6 @@ module.exports = (sequelize, DataTypes) => {
         Task.belongsTo(models.User, { foreignKey: 'reviewer_id', as: 'reviewer' });
         Task.belongsTo(models.User, { foreignKey: 'manager_id', as: 'manager' });
         Task.belongsTo(models.Organization, { foreignKey: 'organization_id', as: 'organization' });
-        Task.belongsTo(models.Program, { foreignKey: 'program_id', as: 'program' });
-        Task.belongsTo(models.Project, { foreignKey: 'project_id', as: 'project' });
-        Task.belongsTo(models.Authority, { foreignKey: 'authority_id', as: 'authority' });
         Task.hasMany(models.TaskDetail, { foreignKey: 'task_id', as: 'details' });
         Task.belongsTo(models.ChatRoom, { foreignKey: 'chat_room_id', as: 'chatRoom' });
     };

@@ -789,3 +789,24 @@ exports.getDepartmentsData = async () => {
 exports.getGradeBooksScoresData = async (id) => {
   return await wisdomRepository.fetchWisdomGradebookScores(id);
 };
+
+exports.getWisdomOrganizationsData = async () => {
+  return await wabysRepository.fetchRelatedOrganizationsPerSystemData(1);
+}
+
+exports.getWisdomTeacherEmployeeDepartmentsData = async () => {
+  const {employeeDepartments, teacherDepartments} = await wabysRepository.fetchTeacherEmployeeDepartmentsData();
+  const departments = [
+    ...employeeDepartments.map(dep => ({
+      id: dep.id,
+      name: dep.name,
+      type: "employee"
+    })),
+    ...teacherDepartments.map(dep => ({
+      id: dep.id,
+      name: dep.Name,
+      type: "teacher"
+    })),
+  ];
+  return departments;
+}
