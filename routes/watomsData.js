@@ -10,5 +10,7 @@ router.get("/curriculums-orgs", watomsController.getCurriculumsOrgs);
 router.get("/specializations", watomsController.getSpecializations);
 router.get("/classrooms", watomsController.getClassRooms);
 router.get("/system-servey", watomsController.getSystemSurvey);
+router.get("/orgs", watomsController.getRelatedOrgs);
+router.get("/employee-teacher-departments", watomsController.getTeacherEmployeeDepartments);
 
 module.exports = router;

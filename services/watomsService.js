@@ -829,3 +829,24 @@ exports.insertSystemSurveyData = async (data) => {
 exports.getTrainersData = async () => {
     return await wabysRepository.fetchSystemRelatedMentors(2);
 };
+
+exports.getWatomsOrganizationsData = async () => {
+    return await wabysRepository.fetchRelatedOrganizationsPerSystemData(2);
+}
+
+exports.getWatomsTeacherEmployeeDepartmentsData = async () => {
+    const { employeeDepartments, teacherDepartments } = await wabysRepository.fetchTeacherEmployeeDepartmentsData();
+    const departments = [
+        ...employeeDepartments.map(dep => ({
+            id: dep.id,
+            name: dep.name,
+            type: "employee"
+        })),
+        ...teacherDepartments.map(dep => ({
+            id: dep.id,
+            name: dep.Name,
+            type: "teacher"
+        })),
+    ];
+    return departments;
+}
