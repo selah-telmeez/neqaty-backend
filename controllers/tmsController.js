@@ -67,9 +67,6 @@ exports.allMyTasks = async (req, res) => {
                 })),
                 ...[
                     { model: db.Organization, as: "organization" },
-                    { model: db.Program, as: "program" },
-                    { model: db.Project, as: "project" },
-                    { model: db.Authority, as: "authority" },
                 ].map(({ model, as }) => ({
                     model,
                     as,
@@ -288,7 +285,6 @@ exports.tmsDashboard = async (req, res) => {
             employee_id: req.query.employee_id,
             month: req.query.month
         };
-
         const dashboard = await tmsService.getDashboardData(filters);
 
         res.status(200).json({
@@ -297,6 +293,13 @@ exports.tmsDashboard = async (req, res) => {
             dashboard
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error });
+        console.error("===== TMS DASHBOARD ERROR =====");
+        console.error(error);
+        console.error(error.stack);
+
+        return res.status(500).json({
+            message: "Server error",
+            error: error.message
+        });
     }
 };

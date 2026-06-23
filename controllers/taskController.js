@@ -199,7 +199,22 @@ exports.assignTask = async (req, res) => {
       system,
     } = req.body;
 
-    // Parse and validate task_details (optional)
+    const parseArray = (value) => {
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string") {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          return value ? [value] : [];
+        }
+      }
+      return value ? [value] : [];
+    };
+
+    const assigneeIds = parseArray(assignee_id).map(Number);
+    const organizationIds = parseArray(organization_id).map(Number);
+
     let parsedTaskDetails = [];
     if (task_details) {
       try {
@@ -214,11 +229,17 @@ exports.assignTask = async (req, res) => {
       }
     }
 
-    // Validate required fields
     const requiredFields = {
-      title, description, start_date, end_date, importance, size,
-      assigner_id, assignee_id, reviewer_id, manager_id,
-      organization_id, system,
+      title,
+      description,
+      start_date,
+      end_date,
+      importance,
+      size,
+      assigner_id,
+      reviewer_id,
+      manager_id,
+      system,
     };
 
     for (const [key, value] of Object.entries(requiredFields)) {
@@ -228,55 +249,133 @@ exports.assignTask = async (req, res) => {
       }
     }
 
-    // Handle file upload
-    const file_path = req.file ? path.join("uploads", req.file.filename) : null;
-
-    const chatRoom = await ChatRoom.create({}, { transaction: t });
-
-    // Create Task
-    const task = await Task.create(
-      {
-        title,
-        description,
-        note,
-        start_date,
-        end_date,
-        importance,
-        size,
-        assigner_id: Number(assigner_id),
-        assignee_id: Number(assignee_id),
-        reviewer_id: Number(reviewer_id),
-        manager_id: Number(manager_id),
-        file_path,
-        organization_id: Number(organization_id),
-        chat_room_id: chatRoom.id,
-        system,
-      },
-      { transaction: t }
-    );
-
-    // Only insert details if provided and non-empty
-    let taskDetailsToInsert = [];
-    if (parsedTaskDetails.length > 0) {
-      taskDetailsToInsert = parsedTaskDetails.map((detail, index) => ({
-        task_id: task.id,
-        order: index + 1,
-        title: detail.title?.trim(),
-        description: detail.description || null,
-        note: detail.note || null,
-        end_date: detail.end_date || null,
-      }));
-
-      await TaskDetail.bulkCreate(taskDetailsToInsert, { transaction: t });
+    if (assigneeIds.length === 0) {
+      await t.rollback();
+      return res.status(400).json({ message: "Missing field: assignee_id" });
     }
 
-    // Commit transaction
+    if (organizationIds.length === 0 && assigneeIds.length === 1) {
+      await t.rollback();
+      return res.status(400).json({ message: "Missing field: organization_id" });
+    }
+
+    const file_path = req.file ? path.join("uploads", req.file.filename) : null;
+
+    const assignees = await User.findAll({
+      where: {
+        id: {
+          [Op.in]: assigneeIds,
+        },
+      },
+      include: [
+        {
+          model: Employee,
+          as: "employee",
+          attributes: ["id", "organization_id"],
+        },
+      ],
+      transaction: t,
+    });
+
+    if (assignees.length !== assigneeIds.length) {
+      await t.rollback();
+      return res.status(400).json({ message: "Some assignees were not found" });
+    }
+
+    const assigneeOrgMap = new Map();
+
+    assignees.forEach(user => {
+      if (!user.employee?.organization_id) {
+        throw new Error(`Assignee ${user.id} has no organization`);
+      }
+
+      assigneeOrgMap.set(user.id, user.employee.organization_id);
+    });
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingTask = await Task.findOne({
+      where: {
+        assignee_id: {
+          [Op.in]: assigneeIds,
+        },
+        createdAt: {
+          [Op.between]: [startOfDay, endOfDay],
+        },
+        [Op.and]: sequelize.where(
+          sequelize.fn("LOWER", sequelize.col("title")),
+          title.trim().toLowerCase()
+        ),
+      },
+      transaction: t,
+    });
+
+    if (existingTask) {
+      await t.rollback();
+      return res.status(409).json({
+        message: "This task has already been assigned to one of these users today.",
+      });
+    }
+
+    const createdTasks = [];
+    const createdTaskDetails = [];
+
+    for (const assigneeId of assigneeIds) {
+      const chatRoom = await ChatRoom.create({}, { transaction: t });
+
+      const taskOrganizationId =
+        assigneeIds.length > 1
+          ? assigneeOrgMap.get(assigneeId)
+          : organizationIds[0] || assigneeOrgMap.get(assigneeId);
+
+      const task = await Task.create(
+        {
+          title,
+          description,
+          note,
+          start_date,
+          end_date,
+          importance,
+          size,
+          assigner_id: Number(assigner_id),
+          assignee_id: Number(assigneeId),
+          reviewer_id: Number(reviewer_id),
+          manager_id: Number(manager_id),
+          file_path,
+          organization_id: Number(taskOrganizationId),
+          chat_room_id: chatRoom.id,
+          system,
+        },
+        { transaction: t }
+      );
+
+      createdTasks.push(task);
+
+      if (parsedTaskDetails.length > 0) {
+        const details = parsedTaskDetails.map((detail, index) => ({
+          task_id: task.id,
+          order: index + 1,
+          title: detail.title?.trim(),
+          description: detail.description || null,
+          note: detail.note || null,
+          end_date: detail.end_date || null,
+        }));
+
+        await TaskDetail.bulkCreate(details, { transaction: t });
+        createdTaskDetails.push(...details);
+      }
+    }
+
     await t.commit();
 
     res.status(201).json({
-      message: "Task assigned successfully",
-      task,
-      task_details: taskDetailsToInsert,
+      message: "Tasks assigned successfully",
+      tasks: createdTasks,
+      task_details: createdTaskDetails,
     });
 
   } catch (error) {
@@ -1137,9 +1236,6 @@ exports.fetchTask = async (req, res) => {
         })),
         ...[
           { model: Organization, as: "organization" },
-          { model: Program, as: "program" },
-          { model: Project, as: "project" },
-          { model: Authority, as: "authority" },
         ].map(({ model, as }) => ({
           model,
           as,

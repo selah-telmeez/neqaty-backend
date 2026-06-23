@@ -109,6 +109,8 @@ const login = async (req, res) => {
     // find the user's role
     const userRole = await UserRole.findOne({ where: { id: user.role_id } });
 
+    const admin = await AdminsUsers.findOne({ where: { user_id: user.id }});
+
     // required variables
     let organization = null;
     let department = null;
@@ -285,6 +287,8 @@ const login = async (req, res) => {
       token,
       organization_id: parent ? null : organization.id,
       systems: userRole.id === 33 ? [{ name: "PE" }] : userRole.id === 39 ? [{ name: "Parent" }] : organization.systems,
+      admin_id: admin?.id || null,
+      admin_role: admin?.role || null
     };
 
     // based on the type of the user attach the related data to the response object

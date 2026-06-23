@@ -22,9 +22,6 @@ exports.fetchTasksForDashboard = async (filters) => {
                 }]
             })),
             { model: db.Organization, as: "organization", attributes: ["id", "name"] },
-            { model: db.Program, as: "program", attributes: ["id", "name"] },
-            { model: db.Project, as: "project", attributes: ["id", "name"] },
-            { model: db.Authority, as: "authority", attributes: ["id", "name"] },
             {
                 model: db.TaskDetail,
                 as: "details",
