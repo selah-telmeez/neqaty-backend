@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
 
     organization_id: {
       type: DataTypes.INTEGER,
-      allowNull: false, // change to true if you want to allow nulls
+      allowNull: false,
     },
 
     room_type: {
@@ -39,6 +39,10 @@ module.exports = (sequelize, DataTypes) => {
   ClassRoom.associate = (models) => {
     ClassRoom.hasMany(models.Class, { foreignKey: 'classRoom_id', as: 'classes' });
     ClassRoom.belongsTo(models.Organization, { foreignKey: 'organization_id', as: 'organization' });
+    ClassRoom.hasMany(models.ClassroomEquipment, {
+      foreignKey: "classroom_id",
+      as: "equipments",
+    });
   };
 
   return ClassRoom;
