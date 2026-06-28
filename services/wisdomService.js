@@ -810,3 +810,7 @@ exports.getWisdomTeacherEmployeeDepartmentsData = async () => {
   ];
   return departments;
 }
+
+exports.getClassRoomDetailsData = async (id) => {
+  return await wabysRepository.fetchClassRoomDetails(id);
+};

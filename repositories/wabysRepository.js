@@ -1189,3 +1189,13 @@ exports.fetchTeacherEmployeeDepartmentsData = async () => {
 
     return {employeeDepartments, teacherDepartments}
 };
+
+exports.fetchClassRoomDetails = async (id) => {
+    const details = await db.ClassroomEquipment.findAll({
+        where: { classroom_id: id },
+    });
+    const classroom = await db.ClassRoom.findOne({
+        where: { id },
+    });
+    return { classroom, details }
+};
