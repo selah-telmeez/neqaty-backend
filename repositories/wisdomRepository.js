@@ -362,3 +362,97 @@ exports.fetchDashboardQuizTest = async (year, students, teachers, fromDate, toDa
 
     return quizesTests
 }
+
+exports.fetchTeachersDashboardData = async () => {
+    const wisdomTeachers = await db.Employee.findAll({
+        where: { role_id: 1 },
+        include: [
+            {
+                model: db.Organization,
+                as: "organization",
+                where: { type: "school" },
+                include: [
+                    {
+                        model: db.System,
+                        as: "systems",
+                        where: { id: 1 },
+                        attributes: [],
+                        through: { attributes: [] }
+                    }
+                ],
+            }
+        ]
+    });
+    const teachersUserId = wisdomTeachers.map(emp => emp.user_id);
+    return await db.IndividualReport.findAll({
+        attributes: ["id", "Assessor_id", "Assessee_id", "createdAt"],
+        where: { Assessee_id: teachersUserId },
+        include: [
+            {
+                model: db.QuestionResult,
+                as: "results",
+                attributes: ["id", "score"],
+                required: true,
+                include: [
+                    {
+                        model: db.Question,
+                        as: "question",
+                        attributes: ["id", "weight", "max_score"],
+                        required: true,
+                        include: [
+                            {
+                                model: db.SubField,
+                                as: "sub_field",
+                                attributes: ["id", "weight"],
+                                required: true,
+                                include: [
+                                    {
+                                        model: db.Field,
+                                        as: "field",
+                                        attributes: ["id", "weight"],
+                                        required: true,
+                                        include: [
+                                            {
+                                                model: db.Form,
+                                                as: "form",
+                                                attributes: ["id", "code", "weight"],
+                                                required: true,
+                                                where: { code: { [Op.like]: "%T" }, type: "360 Individual Assessment" },
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: db.User,
+                as: "assessee",
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Employee,
+                        as: "employee",
+                        attributes: ["id", "first_name", "middle_name", "last_name", "organization_id"],
+                        include: [
+                            {
+                                model: db.Teacher,
+                                as: "teacher",
+                                attributes: ["id"],
+                                include: [
+                                    {
+                                        model: db.Department,
+                                        as: "department",
+                                        attributes: ["id", "Name"],
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    });
+};

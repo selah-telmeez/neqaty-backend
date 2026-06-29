@@ -763,7 +763,7 @@ exports.getClassesData = async () => {
 };
 
 exports.getDepartmentsData = async () => {
-  const departments =  await wabysRepository.fetchSystemRelatedDepartments(1);
+  const departments = await wabysRepository.fetchSystemRelatedDepartments(1);
 
   return departments.map(department => {
     const plainDepartment = department.get({ plain: true });
@@ -795,7 +795,7 @@ exports.getWisdomOrganizationsData = async () => {
 }
 
 exports.getWisdomTeacherEmployeeDepartmentsData = async () => {
-  const {employeeDepartments, teacherDepartments} = await wabysRepository.fetchTeacherEmployeeDepartmentsData();
+  const { employeeDepartments, teacherDepartments } = await wabysRepository.fetchTeacherEmployeeDepartmentsData();
   const departments = [
     ...employeeDepartments.map(dep => ({
       id: dep.id,
@@ -813,4 +813,34 @@ exports.getWisdomTeacherEmployeeDepartmentsData = async () => {
 
 exports.getClassRoomDetailsData = async (id) => {
   return await wabysRepository.fetchClassRoomDetails(id);
+};
+
+exports.getTeachersDashboard = async () => {
+  const dashboard = await wisdomRepository.fetchTeachersDashboardData();
+
+  return dashboard.map(item => {
+    const plainItem = item.get ? item.get({ plain: true }) : item;
+
+    const results = plainItem.results || [];
+
+    const validResults = results.filter(result =>
+      result?.score !== null &&
+      result?.score !== undefined &&
+      result?.question?.max_score
+    );
+
+    const avg_score =
+      validResults.length === 0
+        ? 0
+        : (
+          validResults.reduce((sum, result) => {
+            return sum + (Number(result.score) / Number(result.question.max_score));
+          }, 0) / validResults.length
+        ) * 100;
+
+    return {
+      ...plainItem,
+      avg_score: Number(avg_score.toFixed(2)),
+    };
+  });
 };

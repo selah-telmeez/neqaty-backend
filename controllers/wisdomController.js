@@ -356,3 +356,23 @@ exports.getClassRoomDetails = async (req, res) => {
         });
     }
 };
+
+exports.fetchWisdomTeacherDashboard = async (req, res) => {
+    try {
+        const dashboard = await wisdomService.getTeachersDashboard();
+
+        res.status(200).json({
+            status: "success",
+            message: "teachers dashboard got fetched successfully",
+            dashboard
+        })
+    } catch (error) {
+        console.error("Teacher Dashboard Error:", error);
+
+        res.status(500).json({
+            message: "Teacher Dashboard Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+}

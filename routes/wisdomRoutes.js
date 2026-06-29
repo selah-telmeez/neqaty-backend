@@ -19,7 +19,6 @@ router.get("/pdms/forms", pdmsController.allWisdomForms);
 router.get("/pdms/pedagogicalTest", pdmsController.fetchPedagogicalTest);
 router.post("/pdms/mcqExam", pdmsController.submitMcqExamAnswers);
 router.get("/pdms/dashboard", pdmsController.fetchWisdomPdmsDashboard);
-router.get("/stages", wisdomController.fetchWisdomStages);
 // old specialization / subjects api
 router.get("/subjects", wisdomController.fetchWisdomSubjects);
 router.get("/specializations", wisdomController.fetchWisdomSpecializations);
