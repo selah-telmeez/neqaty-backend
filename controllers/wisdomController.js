@@ -359,7 +359,8 @@ exports.getClassRoomDetails = async (req, res) => {
 
 exports.fetchWisdomTeacherDashboard = async (req, res) => {
     try {
-        const dashboard = await wisdomService.getTeachersDashboard();
+        const orgId = req.params.orgId;
+        const dashboard = await wisdomService.getTeachersDashboard(orgId);
 
         res.status(200).json({
             status: "success",

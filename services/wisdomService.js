@@ -815,8 +815,8 @@ exports.getClassRoomDetailsData = async (id) => {
   return await wabysRepository.fetchClassRoomDetails(id);
 };
 
-exports.getTeachersDashboard = async () => {
-  const dashboard = await wisdomRepository.fetchTeachersDashboardData();
+exports.getTeachersDashboard = async (orgId) => {
+  const dashboard = await wisdomRepository.fetchTeachersDashboardData(orgId);
 
   return dashboard.map(item => {
     const plainItem = item.get ? item.get({ plain: true }) : item;

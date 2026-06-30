@@ -363,23 +363,14 @@ exports.fetchDashboardQuizTest = async (year, students, teachers, fromDate, toDa
     return quizesTests
 }
 
-exports.fetchTeachersDashboardData = async () => {
+exports.fetchTeachersDashboardData = async (orgId) => {
     const wisdomTeachers = await db.Employee.findAll({
         where: { role_id: 1 },
         include: [
             {
                 model: db.Organization,
                 as: "organization",
-                where: { type: "school" },
-                include: [
-                    {
-                        model: db.System,
-                        as: "systems",
-                        where: { id: 1 },
-                        attributes: [],
-                        through: { attributes: [] }
-                    }
-                ],
+                where: { type: "school", id: orgId },
             }
         ]
     });
