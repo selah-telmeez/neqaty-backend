@@ -432,7 +432,7 @@ const signup = async (req, res) => {
           Role.title === "Teacher" ||
           Role.title === "Head of Department (HOD)"
         ) {
-          if (!planned_sessions || subject_ids.length > 0 || !department_id) {
+          if (!planned_sessions || subject_ids.length === 0 || !department_id) {
             throw new Error("Missing teacher details");
           }
           teacher = await Teacher.create(
