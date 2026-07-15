@@ -1199,3 +1199,9 @@ exports.fetchClassRoomDetails = async (id) => {
     });
     return { classroom, details }
 };
+
+exports.insertNewUploadData = async (storedPath) => {
+    return uploadDocument = await db.Upload.create({
+        file_path: storedPath,
+    });
+}

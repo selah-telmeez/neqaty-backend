@@ -140,3 +140,30 @@ exports.createNewOrganization = async (req, res) => {
         });
     }
 };
+
+exports.classroomUpload = async (req, res) => {
+    try {
+        const data = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const storedPath = req.file.path.replace(/\\/g, "/");
+        const decodedOriginal = Buffer.from(req.file.originalname, "latin1").toString("utf8");
+
+        if (!data.user_id || !data.classroom_id) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const uploadedDocument = await adminService.addClassRoomDocument(data, storedPath, decodedOriginal);
+
+        res.status(200).json({
+            status: "success",
+            message: "documnet got uploaded successfully",
+            uploadedDocument
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Database error" });
+    }
+}

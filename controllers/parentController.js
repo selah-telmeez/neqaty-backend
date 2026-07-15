@@ -358,7 +358,7 @@ const getStudentPoints = async (req, res) => {
         });
 
         if (!userPoints) {
-            return res.status(200).json({ points: 100, history: [] }); // Default points if no record
+            return res.status(200).json({ points: 100, history: [] });
         }
 
         // Get point history

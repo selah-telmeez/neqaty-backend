@@ -1,4 +1,5 @@
 const wabysRepository = require("../repositories/wabysRepository");
+const wisdomRepository = require("../repositories/wisdomRepository");
 
 exports.createNewClassData = async (data) => {
     return await wabysRepository.insertNewClassData(data);
@@ -18,4 +19,16 @@ exports.editClassRoomData = async (id, updateData) => {
 
 exports.createNewClassRoomData = async (data) => {
     return await wabysRepository.insertNewClassRoomData(data);
+};
+
+exports.addClassRoomDocument = async (data, storedPath, decodedOriginal) => {
+    const uploadedDocument = await wabysRepository.insertNewUploadData(storedPath);
+
+    const classRoomDocument = await wisdomRepository.insertNewClassRoomDocument(data, uploadedDocument.id);
+
+    return {
+        classRoomDocument,
+        filePath: storedPath,
+        originalname: decodedOriginal,
+    };
 };

@@ -447,3 +447,11 @@ exports.fetchTeachersDashboardData = async (orgId) => {
         ]
     });
 };
+
+exports.insertNewClassRoomDocument = async (data, uploadedDocumentId) => {
+    return await db.ClassroomUpload.create({
+        classroom_id: data.classroom_id,
+        upload_id: uploadedDocumentId,
+        user_id: data.user_id,
+    });
+};
