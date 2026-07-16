@@ -5,22 +5,22 @@ exports.fetchWisdomPdmsDashboardData = async (year, systemId, stage, subject, sp
     // start and end of the selected year
     let startOfYear = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
     let endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-    
+
     // override start date if provided
     if (fromDate && fromDate !== "All") {
         startOfYear = new Date(`${fromDate}T00:00:00.000Z`);
     }
-    
+
     // override end date if provided
     if (toDate && toDate !== "All") {
         endOfYear = new Date(`${toDate}T23:59:59.999Z`);
     }
-    
+
     // 🔍 safety check
     if (startOfYear > endOfYear) {
         throw new Error("Invalid date range: fromDate is after toDate");
     }
-    
+
     // fetch organization's data that is school type
     const organizations = await db.Organization.findAll({
         attributes: ["id", "name", "location"],
@@ -293,33 +293,33 @@ exports.fetchWisdomGradebookScores = async (id) => {
                 required: true,
             }
         ],
-        where: { template_id: id},
+        where: { template_id: id },
         distinct: true,
         order: [["createdAt", "DESC"]],
     });
 };
 
 exports.fetchDashboardQuizTest = async (year, students, teachers, fromDate, toDate) => {
-        // start and end of the selected year
-        let startOfYear = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
-        let endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-    
+    // start and end of the selected year
+    let startOfYear = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
+    let endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
 
-        // override start date if provided
-        if (fromDate && fromDate !== "All") {
-            startOfYear = new Date(`${fromDate}T00:00:00.000Z`);
-        }
-    
-        // override end date if provided
-        if (toDate && toDate !== "All") {
-            endOfYear = new Date(`${toDate}T23:59:59.999Z`);
-        }
-    
-        // safety check
-        if (startOfYear > endOfYear) {
-            throw new Error("Invalid date range: fromDate is after toDate");
-        }
-    
+
+    // override start date if provided
+    if (fromDate && fromDate !== "All") {
+        startOfYear = new Date(`${fromDate}T00:00:00.000Z`);
+    }
+
+    // override end date if provided
+    if (toDate && toDate !== "All") {
+        endOfYear = new Date(`${toDate}T23:59:59.999Z`);
+    }
+
+    // safety check
+    if (startOfYear > endOfYear) {
+        throw new Error("Invalid date range: fromDate is after toDate");
+    }
+
     const studentIds = students.map(s => s.id);
     const TeacherUserIds = teachers.map(s => s.id);
 
@@ -339,10 +339,10 @@ exports.fetchDashboardQuizTest = async (year, students, teachers, fromDate, toDa
                     }
                 ],
                 where: {
-                    start_date:{
+                    start_date: {
                         [Op.between]: [startOfYear, endOfYear]
                     },
-                    end_date:{
+                    end_date: {
                         [Op.between]: [startOfYear, endOfYear]
                     }
                 }
@@ -453,5 +453,20 @@ exports.insertNewClassRoomDocument = async (data, uploadedDocumentId) => {
         classroom_id: data.classroom_id,
         upload_id: uploadedDocumentId,
         user_id: data.user_id,
+    });
+};
+
+exports.fetchClassRoomUploadsDetails = async (classroom_id) => {
+    return await db.Upload.findAll({
+        attributes: ["id", "file_path", "createdAt"],
+        include: [
+            {
+                model: db.ClassroomUpload,
+                as: "classroom_uploads",
+                where: { classroom_id },
+                required: true,
+            },
+        ]
+
     });
 };

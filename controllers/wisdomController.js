@@ -377,3 +377,24 @@ exports.fetchWisdomTeacherDashboard = async (req, res) => {
         });
     }
 }
+
+exports.fetchClassRoomUploads = async (req, res) => {
+    try {
+        const classroomId = req.params.classroom_id;
+        const uploads = await wisdomService.getClassRoomUploadsData(classroomId);
+
+        res.status(200).json({
+            status: "success",
+            message: "classroom uploads got fetched successfully",
+            uploads
+        })
+    } catch (error) {
+        console.error("ClassRooom Uploads Error:", error);
+
+        res.status(500).json({
+            message: "ClassRooom Uploads Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+}
