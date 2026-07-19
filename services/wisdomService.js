@@ -848,3 +848,7 @@ exports.getTeachersDashboard = async (orgId) => {
 exports.getClassRoomUploadsData = async (classroom_id) => {
   return await wisdomRepository.fetchClassRoomUploadsDetails(classroom_id);
 };
+
+exports.getUserImageData = async (user_id) => {
+  return await wisdomRepository.fetchUserImageDetails(user_id);
+};

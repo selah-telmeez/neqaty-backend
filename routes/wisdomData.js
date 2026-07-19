@@ -17,5 +17,6 @@ router.get("/classroom/details/:id", wisdomController.getClassRoomDetails);
 router.get("/stages", wisdomController.fetchWisdomStages);
 router.get("/teachers-dashboard/:orgId", wisdomController.fetchWisdomTeacherDashboard);
 router.get("/classrooms-uploads/:classroom_id", wisdomController.fetchClassRoomUploads);
+router.get("/user-image/:user_id", wisdomController.fetchUserImage);
 
 module.exports = router;

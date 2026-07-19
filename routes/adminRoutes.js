@@ -10,5 +10,6 @@ router.patch("/edit-classroom/:id", adminController.editClass);
 router.post("/create-new-classroom", adminController.createNewClassRoom);
 router.post("/create-new-organization", adminController.createNewOrganization);
 router.post("/classroom-upload", upload.single("file"), adminController.classroomUpload);
+router.post("/user-upload-image", upload.single("file"), adminController.userUploadImage);
 
 module.exports = router;

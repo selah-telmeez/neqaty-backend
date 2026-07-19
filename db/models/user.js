@@ -25,6 +25,15 @@ module.exports = (sequelize, DataTypes) => {
       },
       onDelete: 'RESTRICT',
     },
+    upload_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'uploads',
+        key: 'id',
+      },
+      onDelete: 'RESTRICT',
+    },
     deleted: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
@@ -61,20 +70,12 @@ module.exports = (sequelize, DataTypes) => {
     User.hasOne(models.PeCandidate, { foreignKey: 'user_id', as: 'candidate' });
     User.hasMany(models.ChatMessage, { foreignKey: "sender_id", as: "sender" });
     User.hasMany(models.EmployeePerformanceReport, { foreignKey: "user_id", as: "employee_performance_reports" });
-    User.hasMany(models.McqExam, {
-      foreignKey: 'user_id',
-      as: 'mcq_exams'
-    });
-    User.hasMany(models.ManagersSurvey, {
-      foreignKey: 'user_id',
-      as: 'managers_surveys',
-    });
+    User.hasMany(models.McqExam, { foreignKey: 'user_id', as: 'mcq_exams' });
+    User.hasMany(models.ManagersSurvey, { foreignKey: 'user_id', as: 'managers_surveys' });
     User.hasMany(models.Incident, { foreignKey: 'user_id', as: 'incident' });
     User.hasOne(models.Parent, { foreignKey: "user_id", as: "parent" });
-    User.hasMany(models.ClassroomUpload, {
-      foreignKey: "user_id",
-      as: "classroom_uploads",
-    });
+    User.hasMany(models.ClassroomUpload, { foreignKey: "user_id", as: "classroom_uploads" });
+    User.belongsTo(models.Upload, { foreignKey: 'upload_id', as: 'upload' });
   };
 
   return User;

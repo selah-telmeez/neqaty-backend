@@ -9,17 +9,14 @@ module.exports = (sequelize, DataTypes) => {
                 autoIncrement: true,
                 primaryKey: true,
             },
-
             file_path: {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-
             deleted: {
                 type: DataTypes.BOOLEAN,
                 defaultValue: false,
             },
-
             deletedAt: {
                 type: DataTypes.DATE,
                 allowNull: true,
@@ -32,10 +29,8 @@ module.exports = (sequelize, DataTypes) => {
     );
 
     Upload.associate = (models) => {
-        Upload.hasMany(models.ClassroomUpload, {
-            foreignKey: "upload_id",
-            as: "classroom_uploads",
-        });
+        Upload.hasMany(models.ClassroomUpload, { foreignKey: "upload_id", as: "classroom_uploads" });
+        Upload.hasMany(models.User, { foreignKey: 'upload_id', as: 'users' });
     }
 
     return Upload;

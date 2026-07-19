@@ -398,3 +398,24 @@ exports.fetchClassRoomUploads = async (req, res) => {
         });
     }
 }
+
+exports.fetchUserImage = async (req, res) => {
+    try {
+        const userId = req.params.user_id;
+        const image = await wisdomService.getUserImageData(userId);
+
+        res.status(200).json({
+            status: "success",
+            message: "user image got fetched successfully",
+            image
+        })
+    } catch (error) {
+        console.error("User Image Error:", error);
+
+        res.status(500).json({
+            message: "User Image Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+}

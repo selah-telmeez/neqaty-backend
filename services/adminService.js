@@ -32,3 +32,15 @@ exports.addClassRoomDocument = async (data, storedPath, decodedOriginal) => {
         originalname: decodedOriginal,
     };
 };
+
+exports.addUserImage = async (data, storedPath, decodedOriginal) => {
+    const uploadedDocument = await wabysRepository.insertNewUploadData(storedPath);
+
+    const userImage = await wisdomRepository.insertUploadIdImageToUser(data, uploadedDocument.id);
+
+    return {
+        userImage,
+        filePath: storedPath,
+        originalname: decodedOriginal,
+    };
+};

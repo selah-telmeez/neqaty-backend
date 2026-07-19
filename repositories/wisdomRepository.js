@@ -470,3 +470,24 @@ exports.fetchClassRoomUploadsDetails = async (classroom_id) => {
 
     });
 };
+
+exports.insertUploadIdImageToUser = async (data, uploadedDocumentId) => {
+    return await db.User.update(
+        { upload_id: uploadedDocumentId },
+        { where: { id: data.user_id } }
+    );
+};
+
+exports.fetchUserImageDetails = async (user_id) => {
+    return await db.Upload.findOne({
+        attributes: ["id", "file_path", "createdAt"],
+        include: [
+            {
+                model: db.User,
+                as: "users",
+                where: { id: user_id },
+                required: true,
+            },
+        ]
+    });
+};

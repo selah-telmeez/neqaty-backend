@@ -167,3 +167,30 @@ exports.classroomUpload = async (req, res) => {
         res.status(500).json({ error: "Database error" });
     }
 }
+
+exports.userUploadImage = async (req, res) => {
+    try {
+        const data = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const storedPath = req.file.path.replace(/\\/g, "/");
+        const decodedOriginal = Buffer.from(req.file.originalname, "latin1").toString("utf8");
+
+        if (!data.user_id) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const uploadedImage = await adminService.addUserImage(data, storedPath, decodedOriginal);
+
+        res.status(200).json({
+            status: "success",
+            message: "image got uploaded successfully",
+            uploadedImage
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Database error" });
+    }
+}
