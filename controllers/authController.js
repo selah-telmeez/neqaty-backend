@@ -384,6 +384,7 @@ const signup = async (req, res) => {
           code: newCode,
           password: hashedPassword,
           role_id: user_role_id,
+          upload_id: null
         },
         { transaction }
       );
