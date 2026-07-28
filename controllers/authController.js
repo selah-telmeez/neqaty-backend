@@ -32,7 +32,7 @@ const ebdaEdulogin = async (req, res) => {
 
     const user = await User.findOne({ where: { code } });
     const employee = await Employee.findOne({ where: { user_id: user.id } });
-    if (!employee || employee.organization_id !== 3) {
+    if (!employee || employee.organization_id !== 13) {
       return res.status(401).json({ message: "Invalid code or password" });
     }
 
