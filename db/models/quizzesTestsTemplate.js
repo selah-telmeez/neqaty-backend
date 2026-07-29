@@ -8,12 +8,10 @@ module.exports = (sequelize, DataTypes) => {
                 primaryKey: true,
                 type: DataTypes.INTEGER,
             },
-
             name: {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-
             status: {
                 allowNull: false,
                 type: DataTypes.ENUM(
@@ -25,7 +23,6 @@ module.exports = (sequelize, DataTypes) => {
                     'suspended due to circumstances'
                 ),
             },
-
             type: {
                 allowNull: false,
                 type: DataTypes.ENUM(
@@ -36,7 +33,6 @@ module.exports = (sequelize, DataTypes) => {
                     'مشروع تخرج'
                 ),
             },
-
             subject_id: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
@@ -46,7 +42,6 @@ module.exports = (sequelize, DataTypes) => {
                 },
                 onDelete: 'RESTRICT',
             },
-
             organization_id: {
                 type: DataTypes.INTEGER,
                 allowNull: true,
@@ -57,22 +52,26 @@ module.exports = (sequelize, DataTypes) => {
                 onUpdate: 'CASCADE',
                 onDelete: 'RESTRICT',
             },
-
             start_date: {
                 type: DataTypes.DATE,
                 allowNull: true,
             },
-
             end_date: {
                 type: DataTypes.DATE,
                 allowNull: true,
             },
-
+            category: {
+                type: DataTypes.ENUM('practical', 'theory'),
+                allowNull: true,
+            },
+            max_score: {
+                type: DataTypes.INTEGER,
+                allowNull: true,
+            },
             deleted: {
                 type: DataTypes.BOOLEAN,
                 defaultValue: false,
             },
-
             deletedAt: {
                 type: DataTypes.DATE,
             },
