@@ -4931,16 +4931,16 @@ exports.demoFormsScore = async (req, res) => {
                 allDDScore, allPOScore, allQDScore, allWScore,
                 allTRScore, allCPScore
             ] = await Promise.all([
-                calculateFormScore(usersIds, allCurriculumReports, allCurriculumResults, questionMaps.TG, formTGIds, formsTG),
-                calculateFormScore(usersIds, allCurriculumReports, allCurriculumResults, questionMaps.TE, formTEIds, formsTE),
-                calculateFormScore(usersIds, allIndividualReports, allIndividualResults, questionMaps.T, formTIds, formsT),
-                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.IP, formIPIds, formsIP),
-                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.DD, formDDIds, formsDD),
-                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.PO, formPOIds, formsPO),
-                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.QD, formQDIds, formsQD),
-                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.W, formWIds, formsW),
-                calculateFormScore(usersIds, allIndividualReports, allIndividualResults, questionMaps.TR, formTRIds, formsTR),
-                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.CP, formCPIds, formsCP)
+                calculateFormScore(usersIds, allCurriculumReports, allCurriculumResults, questionMaps.TG, formTGIds, formsTG, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allCurriculumReports, allCurriculumResults, questionMaps.TE, formTEIds, formsTE, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allIndividualReports, allIndividualResults, questionMaps.T, formTIds, formsT, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.IP, formIPIds, formsIP, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.DD, formDDIds, formsDD, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.PO, formPOIds, formsPO, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.QD, formQDIds, formsQD, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.W, formWIds, formsW, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allIndividualReports, allIndividualResults, questionMaps.TR, formTRIds, formsTR, employees, schoolStudents, curriculums, organizations),
+                calculateFormScore(usersIds, allEnvironmentReports, allEnvironmentResults, questionMaps.CP, formCPIds, formsCP, employees, schoolStudents, curriculums, organizations)
             ]);
 
             const relatedSTA = studentsAttendance.filter(sta => studentIds.includes(sta.student_id))
