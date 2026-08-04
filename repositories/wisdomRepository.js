@@ -491,3 +491,9 @@ exports.fetchUserImageDetails = async (user_id) => {
         ]
     });
 };
+
+exports.fetchTeacherClassesDetails = async (teacher_id) => {
+    return await db.Session.findAll({
+        where: { teacher_id }
+    });
+};

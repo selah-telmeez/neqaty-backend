@@ -852,3 +852,7 @@ exports.getClassRoomUploadsData = async (classroom_id) => {
 exports.getUserImageData = async (user_id) => {
   return await wisdomRepository.fetchUserImageDetails(user_id);
 };
+
+exports.getTeacherClassesData = async (teacher_id) => {
+  return await wisdomRepository.fetchTeacherClassesDetails(teacher_id);
+};

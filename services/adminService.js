@@ -33,6 +33,10 @@ exports.addClassRoomDocument = async (data, storedPath, decodedOriginal) => {
     };
 };
 
+exports.assignTeacherClassData = async (teacher_id, class_ids) => {
+    return await wabysRepository.syncTeacherClassSessions(teacher_id, class_ids);
+};
+
 exports.addUserImage = async (data, storedPath, decodedOriginal) => {
     const uploadedDocument = await wabysRepository.insertNewUploadData(storedPath);
 

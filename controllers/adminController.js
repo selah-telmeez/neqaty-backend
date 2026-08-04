@@ -194,3 +194,24 @@ exports.userUploadImage = async (req, res) => {
         res.status(500).json({ error: "Database error" });
     }
 }
+
+exports.assignTeacherClass = async (req, res) => {
+    try {
+        const { teacher_id, class_ids } = req.body;
+
+        if (!teacher_id || !Array.isArray(class_ids)) {
+            return res.status(400).json({ error: "teacher_id and class_ids (array) are required" });
+        }
+
+        const sessions = await adminService.assignTeacherClassData(teacher_id, class_ids);
+
+        res.status(200).json({
+            status: "success",
+            message: "teacher's classes got assigned successfully",
+            sessions
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Database error" });
+    }
+}

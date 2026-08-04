@@ -418,4 +418,25 @@ exports.fetchUserImage = async (req, res) => {
             stack: error.stack,
         });
     }
-}
+};
+
+exports.fetchTeacherClasses = async (req, res) => {
+    try {
+        const teacher_id = req.params.teacher_id;
+        const classes = await wisdomService.getTeacherClassesData(teacher_id);
+
+        res.status(200).json({
+            status: "success",
+            message: "classes got fetched successfully",
+            classes
+        })
+    } catch (error) {
+        console.error("Teacher Classes Error:", error);
+
+        res.status(500).json({
+            message: "Teacher Classes Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+};

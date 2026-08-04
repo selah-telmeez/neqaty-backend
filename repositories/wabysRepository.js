@@ -1205,3 +1205,33 @@ exports.insertNewUploadData = async (storedPath) => {
         file_path: storedPath,
     });
 }
+
+exports.syncTeacherClassSessions = async (teacher_id, class_ids) => {
+    return await db.sequelize.transaction(async (t) => {
+        const existingSessions = await db.Session.findAll({
+            where: { teacher_id },
+            transaction: t,
+        });
+
+        const existingClassIds = existingSessions.map((session) => session.class_id);
+
+        const classIdsToAdd = class_ids.filter((class_id) => !existingClassIds.includes(class_id));
+        const sessionsToRemove = existingSessions.filter((session) => !class_ids.includes(session.class_id));
+
+        if (sessionsToRemove.length) {
+            await db.Session.destroy({
+                where: { id: sessionsToRemove.map((session) => session.id) },
+                transaction: t,
+            });
+        }
+
+        if (classIdsToAdd.length) {
+            await db.Session.bulkCreate(
+                classIdsToAdd.map((class_id) => ({ teacher_id, class_id })),
+                { transaction: t }
+            );
+        }
+
+        return await db.Session.findAll({ where: { teacher_id }, transaction: t });
+    });
+};
