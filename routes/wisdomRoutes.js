@@ -4,6 +4,7 @@ const pdmsController = require("../controllers/pdmsController");
 const wisdomController = require("../controllers/wisdomController");
 const wisdomDataRoutes = require("./wisdomData");
 
+router.use("/data", wisdomDataRoutes);
 // cleaned apis
 router.get("/dashboard/:year/:stage/:subject/:specialization/:from/:to", wisdomController.fetchWisdomDashboard);
 router.get("/dashboard/general-information", wisdomController.fetchWisdomDashboardGeneralInformation);
@@ -13,7 +14,7 @@ router.post("/create-new-grade-book", wisdomController.createNewGradeBook);
 router.get("/gradebooks", wisdomController.GetGradeBooks);
 router.post("/insert-grade-book-score", wisdomController.insertGradeBookScore);
 router.post("/teacher/absence", wisdomController.insertTeacherAbsence);
-router.use("/data", wisdomDataRoutes);
+router.post("/employee-absence", wisdomController.insertEmployeeAbsence);
 // old apis
 router.get("/pdms/forms", pdmsController.allWisdomForms);
 router.get("/pdms/pedagogicalTest", pdmsController.fetchPedagogicalTest);

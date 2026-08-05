@@ -715,6 +715,10 @@ exports.postWisdomInsertTeacherAbsenceData = async (data) => {
   return teacherAbsence;
 }
 
+exports.postWisdomInsertEmployeeAbsenceData = async (data) => {
+  return await wabysRepository.insertEmployeeAbsenceData(data);
+}
+
 exports.getWisdomStudentsData = async () => {
   const students = await wabysRepository.fetchSystemRelatedStudentsOrTrainees(1);
   return students
@@ -723,6 +727,10 @@ exports.getWisdomStudentsData = async () => {
 exports.getWisdomTeachersData = async () => {
   const teachers = await wabysRepository.fetchSystemRelatedTeachersOrTrainers(1);
   return teachers
+}
+
+exports.getWisdomEmployeesData = async () => {
+  return await wabysRepository.fetchSystemRelatedEmployees(1);
 }
 
 exports.getClassRoomsData = async () => {
@@ -753,6 +761,30 @@ exports.getSubjectsData = async () => {
       id: plainSubject.id,
       name: plainSubject.name,
       category_id: plainSubject.category_id,
+      organizations: Array.from(organizationsMap.values()),
+    };
+  });
+};
+
+exports.getCurriculumsData = async () => {
+  const curriculums = await wabysRepository.fetchSystemRelatedCurriculums(1);
+
+  return curriculums.map(curriculum => {
+    const plainCurriculum = curriculum.get({ plain: true });
+
+    const organizationsMap = new Map();
+
+    plainCurriculum.subject.teachers?.forEach(teacher => {
+      const organization = teacher.employee?.organization;
+
+      if (organization) {
+        organizationsMap.set(organization.id, organization);
+      }
+    });
+
+    return {
+      id: plainCurriculum.id,
+      code: plainCurriculum.code,
       organizations: Array.from(organizationsMap.values()),
     };
   });

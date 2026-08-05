@@ -470,7 +470,7 @@ exports.fetchSystemRelatedEmployees = async (systemId) => {
                     {
                         model: db.Teacher,
                         as: "teacher",
-                        required: false, // allow null = LEFT OUTER JOIN
+                        required: false,
                         attributes: ["id"],
                     },
                     {
@@ -741,6 +741,10 @@ exports.insertTeacherAbsenceData = async (data) => {
     return await db.TeacherAbsence.create(data);
 };
 
+exports.insertEmployeeAbsenceData = async (data) => {
+    return await db.EmployeeAbsence.create(data);
+};
+
 exports.insertNewClassData = async (data) => {
     return await db.Class.create(data);
 };
@@ -902,6 +906,55 @@ exports.fetchSystemRelatedSubjects = async (systemId) => {
                     },
                 ],
             },
+        ],
+        distinct: true,
+        order: [["createdAt", "DESC"]],
+    });
+};
+
+exports.fetchSystemRelatedCurriculums = async (systemId) => {
+    return await db.Curriculum.findAll({
+        include: [
+            {
+                model: db.Subject,
+                as: "subject",
+                required: true,
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Teacher,
+                        as: "teachers",
+                        required: true,
+                        attributes: ["id"],
+                        include: [
+                            {
+                                model: db.Employee,
+                                as: "employee",
+                                required: true,
+                                attributes: ["id"],
+                                include: [
+                                    {
+                                        model: db.Organization,
+                                        as: "organization",
+                                        required: true,
+                                        attributes: ["id", "name"],
+                                        include: [
+                                            {
+                                                model: db.System,
+                                                as: "systems",
+                                                required: true,
+                                                where: { id: systemId },
+                                                attributes: [],
+                                                through: { attributes: [] },
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            }
         ],
         distinct: true,
         order: [["createdAt", "DESC"]],
@@ -1187,7 +1240,7 @@ exports.fetchTeacherEmployeeDepartmentsData = async () => {
         attributes: ["id", "Name"],
     });
 
-    return {employeeDepartments, teacherDepartments}
+    return { employeeDepartments, teacherDepartments }
 };
 
 exports.fetchClassRoomDetails = async (id) => {

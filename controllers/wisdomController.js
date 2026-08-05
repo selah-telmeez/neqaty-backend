@@ -157,6 +157,19 @@ exports.insertTeacherAbsence = async (req, res) => {
     }
 };
 
+exports.insertEmployeeAbsence = async (req, res) => {
+    try {
+        await wisdomService.postWisdomInsertEmployeeAbsenceData(req.body);
+
+        res.status(200).json({
+            status: "success",
+            message: "employee absence got inserted successfully",
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error?.message });
+    }
+};
+
 exports.getStudents = async (req, res) => {
     try {
         const students = await wisdomService.getWisdomStudentsData();
@@ -183,6 +196,24 @@ exports.getTeachers = async (req, res) => {
             status: "success",
             message: "teachers got fetched successfully",
             teachers
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
+exports.getEmployees = async (req, res) => {
+    try {
+        const employees = await wisdomService.getWisdomEmployeesData();
+
+        res.status(200).json({
+            status: "success",
+            message: "employees got fetched successfully",
+            employees
         });
     } catch (err) {
         console.error("error:", err);
@@ -237,6 +268,24 @@ exports.getSubjects = async (req, res) => {
             status: "success",
             message: "subjects got fetched successfully",
             subjects
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
+exports.getCurriculums = async (req, res) => {
+    try {
+        const curriculums = await wisdomService.getCurriculumsData();
+
+        res.status(200).json({
+            status: "success",
+            message: "curriculums got fetched successfully",
+            curriculums
         });
     } catch (err) {
         console.error("error:", err);

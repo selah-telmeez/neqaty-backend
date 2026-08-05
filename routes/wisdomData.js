@@ -2,12 +2,14 @@ const express = require("express");
 const router = express.Router();
 const wisdomController = require("../controllers/wisdomController");
 
-router.get("/students", wisdomController.getStudents);
+router.get("/employees", wisdomController.getEmployees);
 router.get("/teachers", wisdomController.getTeachers);
+router.get("/students", wisdomController.getStudents);
 router.get("/classrooms", wisdomController.getClassRooms);
 // the new specialization api
 router.get("/specializations", wisdomController.getSpecializations);
 router.get("/subjects", wisdomController.getSubjects);
+router.get("/curriculums", wisdomController.getCurriculums);
 router.get("/classes", wisdomController.getClasses);
 router.get("/departments", wisdomController.getDepartment);
 router.get("/gradebooks/:template_id", wisdomController.getGradebookScores);
