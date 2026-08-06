@@ -888,3 +888,7 @@ exports.getUserImageData = async (user_id) => {
 exports.getTeacherClassesData = async (teacher_id) => {
   return await wisdomRepository.fetchTeacherClassesDetails(teacher_id);
 };
+
+exports.getEmployeesAbsenceData = async () => {
+  return await wabysRepository.fetchEmployeesAbsenceDetails(1);
+};

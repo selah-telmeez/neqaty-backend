@@ -1288,3 +1288,40 @@ exports.syncTeacherClassSessions = async (teacher_id, class_ids) => {
         return await db.Session.findAll({ where: { teacher_id }, transaction: t });
     });
 };
+
+exports.fetchEmployeesAbsenceDetails = async (systemId) => {
+    return await db.EmployeeAbsence.findAll({
+        attributes: ["absence_date", "cause"],
+        include: [
+            {
+                model: db.Employee,
+                as: "employee",
+                attributes: ["first_name", "middle_name", "last_name"],
+                required: true,
+                include: [
+                    {
+                        model: db.EmployeeRole,
+                        as: "role",
+                        attributes: ["id", "title"],
+                        required: true
+                    },
+                    {
+                        model: db.Organization,
+                        as: "organization",
+                        attributes: ["id", "name"],
+                        required: true,
+                        include: [
+                            {
+                                model: db.System,
+                                as: "systems",
+                                where: { id: systemId },
+                                attributes: [],
+                                through: { attributes: [] }
+                            }
+                        ],
+                    }
+                ]
+            }
+        ]
+    });
+};

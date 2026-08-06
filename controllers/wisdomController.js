@@ -489,3 +489,23 @@ exports.fetchTeacherClasses = async (req, res) => {
         });
     }
 };
+
+exports.fetchEmployeesAbsence = async (req, res) => {
+    try {
+        const employees = await wisdomService.getEmployeesAbsenceData();
+
+        res.status(200).json({
+            status: "success",
+            message: "Employees Absence got fetched successfully",
+            employees
+        })
+    } catch (error) {
+        console.error("Employees Absence Error:", error);
+
+        res.status(500).json({
+            message: "Employees Absence Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+};
