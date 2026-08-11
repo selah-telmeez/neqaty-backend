@@ -492,9 +492,6 @@ exports.fetchSystemRelatedEmployees = async (systemId) => {
                 ],
             },
         ],
-        where: {
-            '$employee.teacher.id$': null, // only users where employee has no teacher
-        },
     });
     return users
 };
