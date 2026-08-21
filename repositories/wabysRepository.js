@@ -1250,6 +1250,37 @@ exports.fetchClassRoomDetails = async (id) => {
     return { classroom, details }
 };
 
+exports.fetchAllClassRoomDetails = async () => {
+    return await db.ClassroomEquipment.findAll({
+        include: [
+            {
+                model: db.ClassRoom,
+                as: "classroom",
+                include: [
+                    {
+                        model: db.Organization,
+                        as: "organization",
+                        
+                    }
+                ]
+            }
+        ]
+    });
+};
+
+exports.updateClassRoomEquipment = async (id, updateData) => {
+    const equipment = await db.ClassroomEquipment.findOne({ where: { id } });
+
+    if (!equipment) return null;
+
+    await equipment.update(updateData);
+    return equipment;
+};
+
+exports.insertClassRoomEquipment = async (equipmentData) => {
+    return await db.ClassroomEquipment.create(equipmentData);
+};
+
 exports.insertNewUploadData = async (storedPath) => {
     return uploadDocument = await db.Upload.create({
         file_path: storedPath,
@@ -1316,6 +1347,58 @@ exports.fetchEmployeesAbsenceDetails = async (systemId) => {
                                 through: { attributes: [] }
                             }
                         ],
+                    }
+                ]
+            }
+        ]
+    });
+};
+
+exports.syncRolePagePermissions = async (role_id, page_ids) => {
+    return await db.sequelize.transaction(async (t) => {
+        const existingPermissions = await db.WebsitePagePermission.findAll({
+            where: { user_role_id: role_id },
+            transaction: t,
+        });
+
+        const existingPageIds = existingPermissions.map((permission) => permission.page_id);
+
+        const pageIdsToAdd = page_ids.filter((page_id) => !existingPageIds.includes(page_id));
+        const permissionsToRemove = existingPermissions.filter((permission) => !page_ids.includes(permission.page_id));
+
+        if (permissionsToRemove.length) {
+            await db.WebsitePagePermission.destroy({
+                where: { id: permissionsToRemove.map((permission) => permission.id) },
+                transaction: t,
+            });
+        }
+
+        if (pageIdsToAdd.length) {
+            await db.WebsitePagePermission.bulkCreate(
+                pageIdsToAdd.map((page_id) => ({ user_role_id: role_id, page_id })),
+                { transaction: t }
+            );
+        }
+
+        return await db.WebsitePagePermission.findAll({
+            where: { user_role_id: role_id },
+            include: [{ model: db.WebsitePage, as: "page" }],
+            transaction: t,
+        });
+    });
+};
+
+exports.fetchUserRolesPermissionsDetails = async () => {
+    return await db.UserRole.findAll({
+        attributes: ["id", "title"],
+        include: [
+            {
+                model: db.WebsitePagePermission,
+                as: "permissions",
+                include: [
+                    {
+                        model: db.WebsitePage,
+                        as: "page"
                     }
                 ]
             }

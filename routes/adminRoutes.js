@@ -12,5 +12,7 @@ router.post("/create-new-organization", adminController.createNewOrganization);
 router.post("/classroom-upload", upload.single("file"), adminController.classroomUpload);
 router.post("/user-upload-image", upload.single("file"), adminController.userUploadImage);
 router.post("/assign-teacher-to-class", adminController.assignTeacherClass);
+router.get("/user-roles-permissions", adminController.getUserRolesPermissions);
+router.post("/role-permissions", adminController.updateRolePermissions);
 
 module.exports = router;

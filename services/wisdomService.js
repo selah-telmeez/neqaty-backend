@@ -847,6 +847,18 @@ exports.getClassRoomDetailsData = async (id) => {
   return await wabysRepository.fetchClassRoomDetails(id);
 };
 
+exports.getAllClassRoomDetailsData = async () => {
+  return await wabysRepository.fetchAllClassRoomDetails();
+};
+
+exports.updateClassRoomEquipmentData = async (id, updateData) => {
+  return await wabysRepository.updateClassRoomEquipment(id, updateData);
+};
+
+exports.insertClassRoomEquipmentData = async (equipmentData) => {
+  return await wabysRepository.insertClassRoomEquipment(equipmentData);
+};
+
 exports.getTeachersDashboard = async (orgId) => {
   const dashboard = await wisdomRepository.fetchTeachersDashboardData(orgId);
 

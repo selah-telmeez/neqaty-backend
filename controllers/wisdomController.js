@@ -406,6 +406,95 @@ exports.getClassRoomDetails = async (req, res) => {
     }
 };
 
+exports.getAllClassRoomDetails = async (req, res) => {
+    try {
+        const classroomDetails = await wisdomService.getAllClassRoomDetailsData();
+
+        res.status(200).json({
+            status: "success",
+            message: "classroom details got fetched successfully",
+            classroomDetails
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
+const CLASSROOM_EQUIPMENT_EDITABLE_FIELDS = ["working", "not_working", "reason"];
+
+exports.updateClassRoomEquipment = async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const updateData = {};
+        CLASSROOM_EQUIPMENT_EDITABLE_FIELDS.forEach((field) => {
+            if (field in req.body) {
+                updateData[field] = req.body[field] === "" ? null : req.body[field];
+            }
+        });
+
+        const equipment = await wisdomService.updateClassRoomEquipmentData(id, updateData);
+
+        if (!equipment) {
+            return res.status(404).json({
+                status: "fail",
+                message: "Tool not found",
+            });
+        }
+
+        res.status(200).json({
+            status: "success",
+            message: "tool updated successfully",
+            equipment,
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
+exports.createClassRoomEquipment = async (req, res) => {
+    try {
+        const { classroom_id, name, location, year, working, not_working, reason } = req.body;
+
+        if (!classroom_id || !name) {
+            return res.status(400).json({
+                status: "fail",
+                message: "classroom_id and name are required",
+            });
+        }
+
+        const equipment = await wisdomService.insertClassRoomEquipmentData({
+            classroom_id,
+            name,
+            location: location || null,
+            year: year || null,
+            working: working || 0,
+            not_working: not_working || 0,
+            reason: reason || null,
+        });
+
+        res.status(201).json({
+            status: "success",
+            message: "tool created successfully",
+            equipment,
+        });
+    } catch (err) {
+        console.error("error:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err?.message,
+        });
+    }
+};
+
 exports.fetchWisdomTeacherDashboard = async (req, res) => {
     try {
         const orgId = req.params.orgId;

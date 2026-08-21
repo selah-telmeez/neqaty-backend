@@ -61,6 +61,7 @@ app.use('/news', express.static(path.join(__dirname, 'news')));
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/data", dataRoutes);
 app.use("/api/v1/wisdom", wisdomRoutes);
 app.use("/api/v1/watoms", watomsRoutes);
 app.use("/api/v1/forms", formRoutes);
@@ -69,7 +70,6 @@ app.use("/api/v1/tasks", tasksRoutes);
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/teachers", teachersRoutes);
 app.use("/api/v1/neqaty", neqatyRoutes);
-app.use("/api/v1/data", dataRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/tms", tmsRoutes);

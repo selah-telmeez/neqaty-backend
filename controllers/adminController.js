@@ -215,3 +215,40 @@ exports.assignTeacherClass = async (req, res) => {
         res.status(500).json({ error: "Database error" });
     }
 }
+
+exports.getUserRolesPermissions = async (req, res) => {
+    try {
+
+        const roles = await adminService.fetchUserRolesPermissions();
+
+        res.status(200).json({
+            status: "success",
+            message: "roles got fetched successfully",
+            roles
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Database error" });
+    }
+}
+
+exports.updateRolePermissions = async (req, res) => {
+    try {
+        const { user_role_id, page_ids } = req.body;
+
+        if (!user_role_id || !Array.isArray(page_ids)) {
+            return res.status(400).json({ error: "role_id and page_ids (array) are required" });
+        }
+
+        const permissions = await adminService.syncRolePermissions(user_role_id, page_ids);
+
+        res.status(200).json({
+            status: "success",
+            message: "role permissions got updated successfully",
+            permissions
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Database error" });
+    }
+}

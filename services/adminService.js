@@ -48,3 +48,11 @@ exports.addUserImage = async (data, storedPath, decodedOriginal) => {
         originalname: decodedOriginal,
     };
 };
+
+exports.fetchUserRolesPermissions = async () => {
+    return await wabysRepository.fetchUserRolesPermissionsDetails();
+};
+
+exports.syncRolePermissions = async (role_id, page_ids) => {
+    return await wabysRepository.syncRolePagePermissions(role_id, page_ids);
+};

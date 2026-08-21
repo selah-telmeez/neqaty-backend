@@ -18,7 +18,9 @@ const {
   Session,
   System,
   PeCandidate,
-  Parent
+  Parent,
+  WebsitePagePermission,
+  WebsitePage
 } = require("../db/models");
 const { comparePassword, hashPassword } = require("../utils/hashPassword");
 require("dotenv").config();
@@ -101,15 +103,31 @@ const login = async (req, res) => {
     }
 
     // check for the user's existence (only the users with deleted column false)
-    const user = await User.findOne({ where: { code, deleted: false } });
+    const user = await User.findOne({
+      where: { code, deleted: false },
+    });
     if (!user) {
       return res.status(401).json({ message: "Invalid code or password" });
     }
 
     // find the user's role
-    const userRole = await UserRole.findOne({ where: { id: user.role_id } });
+    const userRole = await UserRole.findOne({
+      where: { id: user.role_id },
+      include: [
+        {
+          model: WebsitePagePermission,
+          as: "permissions",
+          include: [
+            {
+              model: WebsitePage,
+              as: "page"
+            }
+          ]
+        }
+      ]
+    });
 
-    const admin = await AdminsUsers.findOne({ where: { user_id: user.id }});
+    const admin = await AdminsUsers.findOne({ where: { user_id: user.id } });
 
     // required variables
     let organization = null;
@@ -284,6 +302,7 @@ const login = async (req, res) => {
         candidate ? `${candidate.name}` : parent ? null :
           `${student.first_name} ${student.middle_name} ${student.last_name}`,
       user_role: userRole.title,
+      user_permissions: userRole.permissions,
       token,
       organization_id: parent ? null : organization.id,
       systems: userRole.id === 33 ? [{ name: "PE" }] : userRole.id === 39 ? [{ name: "Parent" }] : organization.systems,
