@@ -859,8 +859,8 @@ exports.insertClassRoomEquipmentData = async (equipmentData) => {
   return await wabysRepository.insertClassRoomEquipment(equipmentData);
 };
 
-exports.getTeachersDashboard = async (orgId) => {
-  const dashboard = await wisdomRepository.fetchTeachersDashboardData(orgId);
+exports.getTeachersDashboard = async (year, month, orgId) => {
+  const dashboard = await wisdomRepository.fetchTeachersDashboardData(year, month, orgId);
 
   return dashboard.map(item => {
     const plainItem = item.get ? item.get({ plain: true }) : item;
@@ -887,6 +887,158 @@ exports.getTeachersDashboard = async (orgId) => {
       avg_score: Number(avg_score.toFixed(2)),
     };
   });
+};
+
+exports.getCurriculumsDashboard = async (year, month, orgId) => {
+  const dashboard = await wisdomRepository.fetchCurriculumsDashboardData(year, month, orgId);
+
+  return dashboard.map(item => {
+    const plainItem = item.get ? item.get({ plain: true }) : item;
+
+    const results = plainItem.results || [];
+
+    const validResults = results.filter(result =>
+      result?.score !== null &&
+      result?.score !== undefined &&
+      result?.questionResult?.max_score
+    );
+
+    const avg_score =
+      validResults.length === 0
+        ? 0
+        : (
+          validResults.reduce((sum, result) => {
+            return sum + (Number(result.score) / Number(result.questionResult.max_score));
+          }, 0) / validResults.length
+        ) * 100;
+
+    return {
+      ...plainItem,
+      avg_score: Number(avg_score.toFixed(2)),
+    };
+  });
+};
+
+exports.getWCPDashboard = async (year, month, orgId) => {
+  const dashboard = await wisdomRepository.fetchWCPDashboardData(year, month, orgId);
+
+  return dashboard.map(item => {
+    const plainItem = item.get ? item.get({ plain: true }) : item;
+
+    const results = plainItem.results || [];
+
+    const validResults = results.filter(result =>
+      result?.score !== null &&
+      result?.score !== undefined &&
+      result?.questionResult?.max_score
+    );
+
+    const avg_score =
+      validResults.length === 0
+        ? 0
+        : (
+          validResults.reduce((sum, result) => {
+            return sum + (Number(result.score) / Number(result.questionResult.max_score));
+          }, 0) / validResults.length
+        ) * 100;
+
+    return {
+      ...plainItem,
+      avg_score: Number(avg_score.toFixed(2)),
+    };
+  });
+};
+
+exports.getWorkEnvDashboard = async (year, month, orgId) => {
+  const dashboard = await wisdomRepository.fetchWorkEnvDashboardData(year, month, orgId);
+
+  return dashboard.map(item => {
+    const plainItem = item.get ? item.get({ plain: true }) : item;
+
+    const results = plainItem.results || [];
+
+    const validResults = results.filter(result =>
+      result?.score !== null &&
+      result?.score !== undefined &&
+      result?.questionResult?.max_score
+    );
+
+    const avg_score =
+      validResults.length === 0
+        ? 0
+        : (
+          validResults.reduce((sum, result) => {
+            return sum + (Number(result.score) / Number(result.questionResult.max_score));
+          }, 0) / validResults.length
+        ) * 100;
+
+    return {
+      ...plainItem,
+      avg_score: Number(avg_score.toFixed(2)),
+    };
+  });
+};
+
+exports.getEduEnvDashboard = async (year, month, orgId) => {
+  const dashboard = await wisdomRepository.fetchEduEnvDashboardData(year, month, orgId);
+
+  return dashboard.map(item => {
+    const plainItem = item.get ? item.get({ plain: true }) : item;
+
+    const results = plainItem.results || [];
+
+    const validResults = results.filter(result =>
+      result?.score !== null &&
+      result?.score !== undefined &&
+      result?.questionResult?.max_score
+    );
+
+    const avg_score =
+      validResults.length === 0
+        ? 0
+        : (
+          validResults.reduce((sum, result) => {
+            return sum + (Number(result.score) / Number(result.questionResult.max_score));
+          }, 0) / validResults.length
+        ) * 100;
+
+    return {
+      ...plainItem,
+      avg_score: Number(avg_score.toFixed(2)),
+    };
+  });
+};
+
+exports.getODBMDashboard = async (year, month, orgId) => {
+  const dashboard = await wisdomRepository.fetchODBMDashboardData(year, month, orgId);
+
+  const morningLineScores = dashboard.morningLineForms.map(item => {
+    const plainItem = item.get ? item.get({ plain: true }) : item;
+
+    const results = plainItem.results || [];
+
+    const validResults = results.filter(result =>
+      result?.score !== null &&
+      result?.score !== undefined &&
+      result?.questionResult?.max_score
+    );
+
+    const avg_score =
+      validResults.length === 0
+        ? 0
+        : (
+          validResults.reduce((sum, result) => {
+            return sum + (Number(result.score) / Number(result.questionResult.max_score));
+          }, 0) / validResults.length
+        ) * 100;
+
+    return {
+      ...plainItem,
+      avg_score: Number(avg_score.toFixed(2)),
+    };
+  });
+
+  return { morningLineScores, studentsBehavior: dashboard.studentsBehavior, studentsAttendance: dashboard.studentsAttendance, studentsAttendance: dashboard.studentsAttendance, allStudents: dashboard.allStudents, teachersSessions: dashboard.teachersSessions }
 };
 
 exports.getClassRoomUploadsData = async (classroom_id) => {

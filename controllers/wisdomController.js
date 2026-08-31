@@ -498,7 +498,9 @@ exports.createClassRoomEquipment = async (req, res) => {
 exports.fetchWisdomTeacherDashboard = async (req, res) => {
     try {
         const orgId = req.params.orgId;
-        const dashboard = await wisdomService.getTeachersDashboard(orgId);
+        const year = req.params.year;
+        const month = req.params.month;
+        const dashboard = await wisdomService.getTeachersDashboard(year, month, orgId);
 
         res.status(200).json({
             status: "success",
@@ -510,6 +512,121 @@ exports.fetchWisdomTeacherDashboard = async (req, res) => {
 
         res.status(500).json({
             message: "Teacher Dashboard Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+}
+
+exports.fetchWisdomCurriculumDashboard = async (req, res) => {
+    try {
+        const orgId = req.params.orgId;
+        const year = req.params.year;
+        const month = req.params.month;
+        const dashboard = await wisdomService.getCurriculumsDashboard(year, month, orgId);
+
+        res.status(200).json({
+            status: "success",
+            message: "curriculums dashboard got fetched successfully",
+            dashboard
+        })
+    } catch (error) {
+        console.error("curriculums Dashboard Error:", error);
+
+        res.status(500).json({
+            message: "curriculums Dashboard Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+}
+
+exports.fetchWisdomWCPDashboard = async (req, res) => {
+    try {
+        const orgId = req.params.orgId;
+        const year = req.params.year;
+        const month = req.params.month;
+        const dashboard = await wisdomService.getWCPDashboard(year, month, orgId);
+
+        res.status(200).json({
+            status: "success",
+            message: "WCP dashboard got fetched successfully",
+            dashboard
+        })
+    } catch (error) {
+        console.error("WCP Dashboard Error:", error);
+
+        res.status(500).json({
+            message: "WCP Dashboard Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+}
+
+exports.fetchWisdomWorkEnvDashboard = async (req, res) => {
+    try {
+        const orgId = req.params.orgId;
+        const year = req.params.year;
+        const month = req.params.month;
+        const dashboard = await wisdomService.getWorkEnvDashboard(year, month, orgId);
+
+        res.status(200).json({
+            status: "success",
+            message: "Work Environment dashboard got fetched successfully",
+            dashboard
+        })
+    } catch (error) {
+        console.error("Work Environment Dashboard Error:", error);
+
+        res.status(500).json({
+            message: "Work Environment Dashboard Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+}
+
+exports.fetchWisdomEduEnvDashboard = async (req, res) => {
+    try {
+        const orgId = req.params.orgId;
+        const year = req.params.year;
+        const month = req.params.month;
+        const dashboard = await wisdomService.getEduEnvDashboard(year, month, orgId);
+
+        res.status(200).json({
+            status: "success",
+            message: "Educational Environment dashboard got fetched successfully",
+            dashboard
+        })
+    } catch (error) {
+        console.error("Educational Environment Dashboard Error:", error);
+
+        res.status(500).json({
+            message: "Educational Environment Dashboard Error",
+            error: error.message,
+            stack: error.stack,
+        });
+    }
+}
+
+exports.fetchWisdomODBMDashboard = async (req, res) => {
+    try {
+        const orgId = req.params.orgId;
+        const year = req.params.year;
+        const month = req.params.month;
+        const dashboard = await wisdomService.getODBMDashboard(year, month, orgId);
+
+        res.status(200).json({
+            status: "success",
+            message: "General discipline (ODBM) dashboard got fetched successfully",
+            dashboard
+        })
+    } catch (error) {
+        console.error("General discipline (ODBM) Dashboard Error:", error);
+
+        res.status(500).json({
+            message: "General discipline (ODBM) Dashboard Error",
             error: error.message,
             stack: error.stack,
         });

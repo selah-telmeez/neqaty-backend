@@ -363,7 +363,10 @@ exports.fetchDashboardQuizTest = async (year, students, teachers, fromDate, toDa
     return quizesTests
 }
 
-exports.fetchTeachersDashboardData = async (orgId) => {
+exports.fetchTeachersDashboardData = async (year, month, orgId) => {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 1);
+
     const wisdomTeachers = await db.Employee.findAll({
         where: { role_id: 1 },
         include: [
@@ -377,7 +380,13 @@ exports.fetchTeachersDashboardData = async (orgId) => {
     const teachersUserId = wisdomTeachers.map(emp => emp.user_id);
     return await db.IndividualReport.findAll({
         attributes: ["id", "Assessor_id", "Assessee_id", "createdAt"],
-        where: { Assessee_id: teachersUserId },
+        where: {
+            Assessee_id: teachersUserId,
+            createdAt: {
+                [Op.gte]: startDate,
+                [Op.lt]: endDate,
+            },
+        },
         include: [
             {
                 model: db.QuestionResult,
@@ -400,7 +409,7 @@ exports.fetchTeachersDashboardData = async (orgId) => {
                                     {
                                         model: db.Field,
                                         as: "field",
-                                        attributes: ["id", "weight"],
+                                        attributes: ["id", "weight", "ar_name", "en_name"],
                                         required: true,
                                         include: [
                                             {
@@ -446,6 +455,552 @@ exports.fetchTeachersDashboardData = async (orgId) => {
             }
         ]
     });
+};
+
+exports.fetchCurriculumsDashboardData = async (year, month, orgId) => {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 1);
+
+    return await db.CurriculumReport.findAll({
+        attributes: ["id", "curriculum_id", "Assessor_id", "createdAt"],
+        where: {
+            organization_id: orgId,
+            createdAt: {
+                [Op.gte]: startDate,
+                [Op.lt]: endDate,
+            },
+        },
+        include: [
+            {
+                model: db.CurriculumResult,
+                as: "results",
+                attributes: ["id", "score"],
+                required: true,
+                include: [
+                    {
+                        model: db.Question,
+                        as: "questionResult",
+                        attributes: ["id", "weight", "max_score"],
+                        required: true,
+                        include: [
+                            {
+                                model: db.SubField,
+                                as: "sub_field",
+                                attributes: ["id", "weight"],
+                                required: true,
+                                include: [
+                                    {
+                                        model: db.Field,
+                                        as: "field",
+                                        attributes: ["id", "weight", "ar_name", "en_name"],
+                                        required: true,
+                                        include: [
+                                            {
+                                                model: db.Form,
+                                                as: "form",
+                                                attributes: ["id", "code", "weight"],
+                                                required: true,
+                                                where: { code: { [Op.like]: "%C" }, type: "360 Curriculum Assessment" },
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: db.User,
+                as: "assessor",
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Employee,
+                        as: "employee",
+                        attributes: ["id", "first_name", "middle_name", "last_name", "organization_id"],
+                        include: [
+                            {
+                                model: db.Teacher,
+                                as: "teacher",
+                                attributes: ["id"],
+                                required: false,
+                                include: [
+                                    {
+                                        model: db.Department,
+                                        as: "department",
+                                        attributes: ["id", "Name"],
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: db.Curriculum,
+                as: "curriculum",
+                attributes: ["id", "code"]
+            }
+        ]
+    });
+};
+
+exports.fetchWCPDashboardData = async (year, month, orgId) => {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 1);
+
+    return await db.EnvironmentReports.findAll({
+        attributes: ["id", "user_id", "createdAt"],
+        where: {
+            organization_id: orgId,
+            createdAt: {
+                [Op.gte]: startDate,
+                [Op.lt]: endDate,
+            },
+        },
+        include: [
+            {
+                model: db.EnvironmentResults,
+                as: "results",
+                attributes: ["id", "score"],
+                required: true,
+                include: [
+                    {
+                        model: db.Question,
+                        as: "questionResult",
+                        attributes: ["id", "weight", "max_score"],
+                        required: true,
+                        include: [
+                            {
+                                model: db.SubField,
+                                as: "sub_field",
+                                attributes: ["id", "weight"],
+                                required: true,
+                                include: [
+                                    {
+                                        model: db.Field,
+                                        as: "field",
+                                        attributes: ["id", "weight", "ar_name", "en_name"],
+                                        required: true,
+                                        include: [
+                                            {
+                                                model: db.Form,
+                                                as: "form",
+                                                attributes: ["id", "code", "weight"],
+                                                required: true,
+                                                where: { code: { [Op.like]: "%WCP" }, type: "normal" },
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: db.User,
+                as: "employee",
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Employee,
+                        as: "employee",
+                        attributes: ["id", "first_name", "middle_name", "last_name", "organization_id"],
+                        include: [
+                            {
+                                model: db.Teacher,
+                                as: "teacher",
+                                attributes: ["id"],
+                                required: false,
+                                include: [
+                                    {
+                                        model: db.Department,
+                                        as: "department",
+                                        attributes: ["id", "Name"],
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    });
+};
+
+exports.fetchWorkEnvDashboardData = async (year, month, orgId) => {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 1);
+
+    return await db.EnvironmentReports.findAll({
+        attributes: ["id", "user_id", "createdAt"],
+        where: {
+            organization_id: orgId,
+            createdAt: {
+                [Op.gte]: startDate,
+                [Op.lt]: endDate,
+            },
+        },
+        include: [
+            {
+                model: db.EnvironmentResults,
+                as: "results",
+                attributes: ["id", "score"],
+                required: true,
+                include: [
+                    {
+                        model: db.Question,
+                        as: "questionResult",
+                        attributes: ["id", "weight", "max_score"],
+                        required: true,
+                        include: [
+                            {
+                                model: db.SubField,
+                                as: "sub_field",
+                                attributes: ["id", "weight"],
+                                required: true,
+                                include: [
+                                    {
+                                        model: db.Field,
+                                        as: "field",
+                                        attributes: ["id", "weight", "ar_name", "en_name"],
+                                        required: true,
+                                        include: [
+                                            {
+                                                model: db.Form,
+                                                as: "form",
+                                                attributes: ["id", "code", "weight"],
+                                                required: true,
+                                                where: { code: { [Op.like]: "%W" }, type: "normal" },
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: db.User,
+                as: "employee",
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Employee,
+                        as: "employee",
+                        attributes: ["id", "first_name", "middle_name", "last_name", "organization_id"],
+                        include: [
+                            {
+                                model: db.Teacher,
+                                as: "teacher",
+                                attributes: ["id"],
+                                required: false,
+                                include: [
+                                    {
+                                        model: db.Department,
+                                        as: "department",
+                                        attributes: ["id", "Name"],
+                                    }
+                                ]
+                            },
+                            {
+                                model: db.EmployeeRole,
+                                as: "role",
+                                attributes: ["id", "title"],
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    });
+};
+
+exports.fetchEduEnvDashboardData = async (year, month, orgId) => {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 1);
+
+    return await db.EnvironmentReports.findAll({
+        attributes: ["id", "user_id", "createdAt"],
+        where: {
+            organization_id: orgId,
+            createdAt: {
+                [Op.gte]: startDate,
+                [Op.lt]: endDate,
+            },
+        },
+        include: [
+            {
+                model: db.EnvironmentResults,
+                as: "results",
+                attributes: ["id", "score"],
+                required: true,
+                include: [
+                    {
+                        model: db.Question,
+                        as: "questionResult",
+                        attributes: ["id", "weight", "max_score"],
+                        required: true,
+                        include: [
+                            {
+                                model: db.SubField,
+                                as: "sub_field",
+                                attributes: ["id", "weight"],
+                                required: true,
+                                include: [
+                                    {
+                                        model: db.Field,
+                                        as: "field",
+                                        attributes: ["id", "weight", "ar_name", "en_name"],
+                                        required: true,
+                                        include: [
+                                            {
+                                                model: db.Form,
+                                                as: "form",
+                                                attributes: ["id", "code", "weight"],
+                                                required: true,
+                                                where: { code: { [Op.like]: "%EDU" }, type: "normal" },
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: db.User,
+                as: "employee",
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Employee,
+                        as: "employee",
+                        attributes: ["id", "first_name", "middle_name", "last_name", "organization_id"],
+                        include: [
+                            {
+                                model: db.Teacher,
+                                as: "teacher",
+                                attributes: ["id"],
+                                required: false,
+                                include: [
+                                    {
+                                        model: db.Department,
+                                        as: "department",
+                                        attributes: ["id", "Name"],
+                                    }
+                                ]
+                            },
+                            {
+                                model: db.EmployeeRole,
+                                as: "role",
+                                attributes: ["id", "title"],
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    });
+};
+
+exports.fetchODBMDashboardData = async (year, month, orgId) => {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 1);
+
+    const morningLineForms = await db.EnvironmentReports.findAll({
+        attributes: ["id", "user_id", "createdAt"],
+        where: {
+            organization_id: orgId,
+            createdAt: {
+                [Op.gte]: startDate,
+                [Op.lt]: endDate,
+            },
+        },
+        include: [
+            {
+                model: db.EnvironmentResults,
+                as: "results",
+                attributes: ["id", "score"],
+                required: true,
+                include: [
+                    {
+                        model: db.Question,
+                        as: "questionResult",
+                        attributes: ["id", "weight", "max_score"],
+                        required: true,
+                        include: [
+                            {
+                                model: db.SubField,
+                                as: "sub_field",
+                                attributes: ["id", "weight"],
+                                required: true,
+                                include: [
+                                    {
+                                        model: db.Field,
+                                        as: "field",
+                                        attributes: ["id", "weight", "ar_name", "en_name"],
+                                        required: true,
+                                        include: [
+                                            {
+                                                model: db.Form,
+                                                as: "form",
+                                                attributes: ["id", "code", "weight"],
+                                                required: true,
+                                                where: { code: "ML | DO", type: "normal" },
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: db.User,
+                as: "employee",
+                attributes: ["id"],
+                include: [
+                    {
+                        model: db.Employee,
+                        as: "employee",
+                        attributes: ["id", "first_name", "middle_name", "last_name", "organization_id"],
+                        include: [
+                            {
+                                model: db.Teacher,
+                                as: "teacher",
+                                attributes: ["id"],
+                                required: false,
+                                include: [
+                                    {
+                                        model: db.Department,
+                                        as: "department",
+                                        attributes: ["id", "Name"],
+                                    }
+                                ]
+                            },
+                            {
+                                model: db.EmployeeRole,
+                                as: "role",
+                                attributes: ["id", "title"],
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    });
+
+    const studentsBehavior = await db.studentBehavior.findAll({
+        attributes: ["id", "offender_id", "social_worker_id", "behavior_date"],
+        where: {
+            behavior_date: {
+                [Op.gte]: startDate,
+                [Op.lt]: endDate,
+            }
+        },
+        include: [
+            {
+                model: db.studentBehaviorType,
+                as: "behaviorType",
+                attributes: ["id", "name"],
+                required: true,
+                include: [
+                    {
+                        model: db.studentBehaviorCategory,
+                        as: "behaviorCategories",
+                        attributes: ["id", "name"],
+                        required: true
+                    }
+                ]
+            },
+            {
+                model: db.User,
+                as: "offender",
+                attributes: ["id"],
+                required: true,
+                include: [
+                    {
+                        model: db.Student,
+                        as: "student",
+                        attributes: ["id"],
+                        required: true,
+                        where: { school_id: orgId },
+                        include: [
+                            {
+                                model: db.Specialization,
+                                as: "specialization",
+                                attributes: ["id", "name"],
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    });
+
+    const studentsAttendance = await db.studentAttendance.findAll({
+        attributes: ["id", "status", "createdAt"],
+        where: {
+            createdAt: {
+                [Op.gte]: startDate,
+                [Op.lt]: endDate,
+            }
+        },
+        include: [
+            {
+                model: db.Student,
+                as: "student",
+                attributes: ["id"],
+                required: true,
+                where: { school_id: orgId },
+                include: [
+                    {
+                        model: db.Specialization,
+                        as: "specialization",
+                        attributes: ["id", "name"],
+                    }
+                ]
+            }
+        ]
+    });
+
+    const allStudents = await db.Student.findAll({
+        attributes: ["id", "school_id"],
+        where: { school_id: orgId },
+        include: [
+            {
+                model: db.Specialization,
+                as: "specialization",
+                attributes: ["id", "name"],
+            }
+        ]
+    });
+
+    const teachersSessions = await db.Teacher.findAll({
+        attributes: ["planned_sessions", "actual_sessions"],
+        include: [
+            {
+                model: db.Employee,
+                as: "employee",
+                required: true,
+                where: { organization_id: orgId },
+                attributes: ["id"]
+            },
+            {
+                model: db.Department,
+                as: "department",
+                attributes: ["id", "Name"]
+            }
+        ]
+    });
+
+    return { morningLineForms, studentsBehavior, studentsAttendance, allStudents, teachersSessions};
 };
 
 exports.insertNewClassRoomDocument = async (data, uploadedDocumentId) => {
