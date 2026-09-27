@@ -719,6 +719,10 @@ exports.postWisdomInsertEmployeeAbsenceData = async (data) => {
   return await wabysRepository.insertEmployeeAbsenceData(data);
 }
 
+exports.patchWisdomChangeTeacherSubject = async (data) => {
+  return await wabysRepository.patchTeacherSubjectData(data);
+}
+
 exports.getWisdomStudentsData = async () => {
   const students = await wabysRepository.fetchSystemRelatedStudentsOrTrainees(1);
   return students

@@ -170,6 +170,19 @@ exports.insertEmployeeAbsence = async (req, res) => {
     }
 };
 
+exports.changeTeacherSubject = async (req, res) => {
+    try {
+        await wisdomService.patchWisdomChangeTeacherSubject(req.body);
+
+        res.status(200).json({
+            status: "success",
+            message: "teacher subject got changed successfully",
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error?.message });
+    }
+};
+
 exports.getStudents = async (req, res) => {
     try {
         const students = await wisdomService.getWisdomStudentsData();

@@ -742,6 +742,39 @@ exports.insertEmployeeAbsenceData = async (data) => {
     return await db.EmployeeAbsence.create(data);
 };
 
+exports.patchTeacherSubjectData = async (data) => {
+    const transaction = await db.sequelize.transaction();
+
+    try {
+        const { teacher_id, subject_ids } = data;
+
+        // Delete all existing subjects for this teacher
+        await db.TeacherSubject.destroy({
+            where: {
+                teacher_id
+            },
+            transaction
+        });
+
+        // Create the new subjects
+        const teacherSubjects = subject_ids.map((subjectId) => ({
+            teacher_id,
+            subject_id: subjectId
+        }));
+
+        await db.TeacherSubject.bulkCreate(teacherSubjects, {
+            transaction
+        });
+
+        await transaction.commit();
+
+        return teacherSubjects;
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+};
+
 exports.insertNewClassData = async (data) => {
     return await db.Class.create(data);
 };

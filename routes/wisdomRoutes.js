@@ -15,6 +15,7 @@ router.get("/gradebooks", wisdomController.GetGradeBooks);
 router.post("/insert-grade-book-score", wisdomController.insertGradeBookScore);
 router.post("/teacher/absence", wisdomController.insertTeacherAbsence);
 router.post("/employee-absence", wisdomController.insertEmployeeAbsence);
+router.post("/teacher-subject", wisdomController.changeTeacherSubject);
 // old apis
 router.get("/pdms/forms", pdmsController.allWisdomForms);
 router.get("/pdms/pedagogicalTest", pdmsController.fetchPedagogicalTest);
