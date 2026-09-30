@@ -49,20 +49,10 @@ module.exports = (sequelize, DataTypes) => {
     classRoom_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'classRooms',
-        key: 'id',
-      },
-      onDelete: 'RESTRICT'
     },
     stage_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      references: {
-        model: 'stages',
-        key: 'id',
-      },
-      onDelete: 'RESTRICT'
     },
     status: {
       type: DataTypes.ENUM('ongoing', 'finished', 'onhold', 'cancelled'),
@@ -91,10 +81,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Class.associate = (models) => {
-    Class.belongsTo(models.ClassRoom, { foreignKey: 'classRoom_id', as: 'classRoom' });
-    Class.belongsTo(models.Stage, { foreignKey: 'stage_id', as: 'stage' });
     Class.belongsTo(models.Specialization, { foreignKey: 'specialization_id', as: 'specialization' });
-    Class.hasMany(models.Session, { foreignKey: 'class_id', as: 'sessions' });
     Class.hasMany(models.Student, { foreignKey: 'class_id', as: 'students' });
   };
 

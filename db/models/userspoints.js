@@ -30,7 +30,6 @@ module.exports = (sequelize, DataTypes) => {
   UsersPoints.associate = function (models) {
     UsersPoints.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
     UsersPoints.hasMany(models.PointsHistory, { foreignKey: 'user_id', as: 'pointsHistory' });
-    UsersPoints.hasMany(models.MonthlyTotalPoints, { foreignKey: 'user_id', as: 'monthlyPoints' });
   };
 
   return UsersPoints;

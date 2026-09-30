@@ -6,28 +6,20 @@ const {
   User,
   Student,
   Employee,
+  Teacher,
+  UserRole,
+  EmployeeRole,
+  Organization,
+  Department,
+  Class,
+  Specialization,
 } = require("../db/models");
-const { fn, col, literal } = require("sequelize");
-const moment = require("moment");
-
-exports.viewSchoolPoints = async (req, res) => {
-  try {
-    const Points = await RewardsAndPunishments.findAll({
-      attributes: ["id", "name", "type", "points"],
-      where: {
-        type: ["school_reward", "school_punishment"],
-      },
-    });
-
-    res.status(200).json({
-      status: "success",
-      message: "data got fetched successfully",
-      Points,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-};
+const { fn, col, Op } = require("sequelize");
+const crypto = require("crypto");
+const { hashPassword } = require("../utils/hashPassword");
+const fs = require("fs");
+const path = require("path");
+const { uploadNeqatyLogo, LOGO_DIR } = require("../middleware/uploadNeqatyLogo");
 
 exports.viewVtcPoints = async (req, res) => {
   try {
@@ -142,7 +134,7 @@ exports.viewPointsPermissions = async (req, res) => {
           model: AdminsUsers,
           as: "admin",
           required: true,
-          attributes: ["username"],
+          attributes: ["id", "role"],
           include: [
             {
               model: User,
@@ -318,10 +310,21 @@ exports.PointRequestStatus = async (req, res) => {
 exports.viewUserPoints = async (req, res) => {
   try {
     const { user_id } = req.body;
-    const Points = await UsersPoints.findOne({
-      attributes: ["points"],
+    if (!user_id) {
+      return res.status(400).json({ message: "user_id is required" });
+    }
+
+    const user = await User.findByPk(user_id, { attributes: ["id"] });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // every user starts with 100 points, so create the row on first lookup
+    const [userPoints] = await UsersPoints.findOrCreate({
       where: { user_id },
+      defaults: { points: 100 },
     });
+    const Points = { points: userPoints.points };
 
     res.status(200).json({
       status: "success",
@@ -333,23 +336,29 @@ exports.viewUserPoints = async (req, res) => {
   }
 };
 
+// the last `count` months ending with the current one, oldest first
+const lastMonths = (count) => {
+  const now = new Date();
+  const monthsArray = [];
+  for (let offset = count - 1; offset >= 0; offset--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    monthsArray.push({
+      monthNumber: date.getMonth() + 1,
+      year: date.getFullYear(),
+      month: date.toLocaleString("ar", { month: "long" }),
+    });
+  }
+  const startDate = new Date(now.getFullYear(), now.getMonth() - (count - 1), 1);
+  return { monthsArray, startDate };
+};
+
 exports.watomsMonthlyPerformance = async (req, res) => {
   try {
-    const orgs = [4, 5, 7, 8, 9];
-
-    const currentMonth = new Date().getMonth() + 1;
-    const startMonth = 4;
-
-    const monthsArray = [];
-    for (let m = startMonth; m <= currentMonth; m++) {
-      monthsArray.push({
-        monthNumber: m,
-        month: new Date(0, m - 1).toLocaleString("ar", { month: "long" }),
-      });
-    }
+    const { monthsArray, startDate } = lastMonths(12);
 
     const results = await PointsHistory.findAll({
       attributes: [
+        [fn("DATE_PART", "year", col("PointsHistory.updatedAt")), "year"],
         [fn("DATE_PART", "month", col("PointsHistory.updatedAt")), "monthNumber"],
         [fn("SUM", col("point.points")), "totalPoints"],
       ],
@@ -371,7 +380,6 @@ exports.watomsMonthlyPerformance = async (req, res) => {
                   as: "employee",
                   required: true, // force inner join
                   attributes: [],
-                  where: { organization_id: orgs },
                 },
               ],
             },
@@ -384,17 +392,21 @@ exports.watomsMonthlyPerformance = async (req, res) => {
           attributes: [],
         },
       ],
-      where: { status: "accepted" },
-      group: [fn("DATE_PART", "month", col("PointsHistory.updatedAt"))],
+      where: { status: "accepted", updatedAt: { [Op.gte]: startDate } },
+      group: [
+        fn("DATE_PART", "year", col("PointsHistory.updatedAt")),
+        fn("DATE_PART", "month", col("PointsHistory.updatedAt")),
+      ],
       raw: true,
     });
 
     const months = monthsArray.map((m) => {
       const found = results.find(
-        (r) => Number(r.monthNumber) === m.monthNumber
+        (r) => Number(r.monthNumber) === m.monthNumber && Number(r.year) === m.year
       );
       return {
         monthNumber: m.monthNumber,
+        year: m.year,
         month: m.month,
         performance: found ? Number(found.totalPoints) : 0,
       };
@@ -402,7 +414,7 @@ exports.watomsMonthlyPerformance = async (req, res) => {
 
     res.status(200).json({
       status: "success",
-      message: "Aggregated performance across selected orgs per month",
+      message: "Aggregated performance per month",
       data: months,
     });
   } catch (error) {
@@ -415,16 +427,7 @@ exports.employeeMonthlyPerformance = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const currentMonth = new Date().getMonth() + 1; // 1–12
-    const startMonth = 4; // April
-
-    const monthsArray = [];
-    for (let m = startMonth; m <= currentMonth; m++) {
-      monthsArray.push({
-        monthNumber: m,
-        month: new Date(0, m - 1).toLocaleString("ar", { month: "long" }),
-      });
-    }
+    const { monthsArray, startDate } = lastMonths(12);
 
     const employeePoints = await PointsHistory.findAll({
       include: [
@@ -458,12 +461,14 @@ exports.employeeMonthlyPerformance = async (req, res) => {
           attributes: ['name', 'points', 'type'],
         },
       ],
-      where: { status: "accepted" },
+      where: { status: "accepted", updatedAt: { [Op.gte]: startDate } },
+      order: [["updatedAt", "ASC"]],
       raw: true,
     })
 
     const results = await PointsHistory.findAll({
       attributes: [
+        [fn("DATE_PART", "year", col("PointsHistory.updatedAt")), "year"],
         [fn("DATE_PART", "month", col("PointsHistory.updatedAt")), "monthNumber"],
         [fn("SUM", col("point.points")), "totalPoints"],
       ],
@@ -498,17 +503,21 @@ exports.employeeMonthlyPerformance = async (req, res) => {
           attributes: [],
         },
       ],
-      where: { status: "accepted" },
-      group: [fn("DATE_PART", "month", col("PointsHistory.updatedAt"))],
+      where: { status: "accepted", updatedAt: { [Op.gte]: startDate } },
+      group: [
+        fn("DATE_PART", "year", col("PointsHistory.updatedAt")),
+        fn("DATE_PART", "month", col("PointsHistory.updatedAt")),
+      ],
       raw: true,
     });
 
     const months = monthsArray.map((m) => {
       const found = results.find(
-        (r) => Number(r.monthNumber) === m.monthNumber
+        (r) => Number(r.monthNumber) === m.monthNumber && Number(r.year) === m.year
       );
       return {
         monthNumber: m.monthNumber,
+        year: m.year,
         month: m.month,
         performance: found ? Number(found.totalPoints) : 0,
       };
@@ -528,80 +537,398 @@ exports.employeeMonthlyPerformance = async (req, res) => {
   }
 };
 
-exports.wisdomMonthlyPerformance = async (req, res) => {
+const VTC_POINT_TYPES = ["vtc_reward", "vtc_punishment"];
+
+const validateVtcPoint = ({ name, type, points }) => {
+  if (!name || !String(name).trim()) return "Name is required";
+  if (!VTC_POINT_TYPES.includes(type)) return "Invalid point type";
+  if (points === undefined || points === "" || !Number.isInteger(Number(points))) {
+    return "Points must be an integer";
+  }
+  return null;
+};
+
+exports.createVtcPoint = async (req, res) => {
   try {
-    const orgs = [1, 2];
+    const { name, type, points } = req.body;
+    const validationError = validateVtcPoint({ name, type, points });
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
 
-    const currentMonth = new Date().getMonth() + 1;
-    const startMonth = 4;
+    const Point = await RewardsAndPunishments.create({
+      name: String(name).trim(),
+      type,
+      points: Number(points),
+    });
 
-    const monthsArray = [];
-    for (let m = startMonth; m <= currentMonth; m++) {
-      monthsArray.push({
-        monthNumber: m,
-        month: new Date(0, m - 1).toLocaleString("ar", { month: "long" }),
+    res.status(201).json({
+      status: "success",
+      message: "Point created successfully",
+      Point,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.updateVtcPoint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, type, points } = req.body;
+    const validationError = validateVtcPoint({ name, type, points });
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
+
+    const Point = await RewardsAndPunishments.findOne({
+      where: { id, type: VTC_POINT_TYPES },
+    });
+    if (!Point) {
+      return res.status(404).json({ message: "Point not found" });
+    }
+
+    await Point.update({
+      name: String(name).trim(),
+      type,
+      points: Number(points),
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Point updated successfully",
+      Point,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.deleteVtcPoint = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const Point = await RewardsAndPunishments.findOne({
+      where: { id, type: VTC_POINT_TYPES },
+    });
+    if (!Point) {
+      return res.status(404).json({ message: "Point not found" });
+    }
+
+    // points_history.point_id is NOT NULL, so a point already used in history can't be removed
+    const usedCount = await PointsHistory.count({ where: { point_id: id } });
+    if (usedCount > 0) {
+      return res.status(409).json({
+        message: "Point is already used in points history and can't be deleted",
       });
     }
 
-    const results = await PointsHistory.findAll({
-      attributes: [
-        [fn("DATE_PART", "month", col("PointsHistory.updatedAt")), "monthNumber"],
-        [fn("SUM", col("point.points")), "totalPoints"],
+    await Point.destroy();
+
+    res.status(200).json({
+      status: "success",
+      message: "Point deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// user_type -> titles in users_role / employees_role (and admins_users role for admins)
+const NEW_USER_TYPES = {
+  admin: { userRole: "admin", employeeRole: "ADMIN", adminRole: "admin" },
+  teacher: { userRole: "Teacher", employeeRole: "Teacher" },
+  employee: { userRole: "Employee", employeeRole: "Employee" },
+  student: { userRole: "Student" },
+};
+
+exports.signupOptions = async (req, res) => {
+  try {
+    const [organizations, departments, classes, specializations] = await Promise.all([
+      Organization.findAll({ attributes: ["id", "name"], where: { deleted: false }, order: [["name", "ASC"]] }),
+      Department.findAll({ attributes: ["id", "Name"], where: { deleted: false }, order: [["Name", "ASC"]] }),
+      Class.findAll({ attributes: ["id", "name", "specialization_id"], where: { deleted: false }, order: [["name", "ASC"]] }),
+      Specialization.findAll({ attributes: ["id", "name"], where: { deleted: false }, order: [["name", "ASC"]] }),
+    ]);
+
+    res.status(200).json({
+      status: "success",
+      message: "data got fetched successfully",
+      organizations,
+      departments,
+      classes,
+      specializations,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.createUser = async (req, res) => {
+  try {
+    const {
+      user_type,
+      first_name,
+      middle_name,
+      last_name,
+      email,
+      organization_id,
+      department_id,
+      class_id,
+      specialization_id,
+    } = req.body;
+
+    const typeConfig = NEW_USER_TYPES[user_type];
+    if (!typeConfig) {
+      return res.status(400).json({ message: "Invalid user type" });
+    }
+    if (!first_name?.trim() || !last_name?.trim() || !organization_id) {
+      return res.status(400).json({ message: "First name, last name and organization are required" });
+    }
+    if (user_type === "teacher" && !department_id) {
+      return res.status(400).json({ message: "Department is required for teachers" });
+    }
+    if (user_type === "student" && (!class_id || !specialization_id)) {
+      return res.status(400).json({ message: "Class and specialization are required for students" });
+    }
+
+    const organization = await Organization.findByPk(organization_id);
+    if (!organization) {
+      return res.status(400).json({ message: "Organization not found" });
+    }
+
+    const password = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+    const hashedPassword = await hashPassword(password);
+    const names = {
+      first_name: first_name.trim(),
+      middle_name: middle_name?.trim() || "",
+      last_name: last_name.trim(),
+      email: email?.trim().toLowerCase() || "",
+    };
+
+    const user = await User.sequelize.transaction(async (transaction) => {
+      // serialize code generation so two signups can't get the same code
+      await User.sequelize.query("SELECT pg_advisory_xact_lock(hashtext('users_code'))", { transaction });
+      const maxCode = await User.max("code", { transaction });
+      const code = (maxCode || 0) + 1;
+
+      const [userRole] = await UserRole.findOrCreate({
+        where: { title: typeConfig.userRole },
+        transaction,
+      });
+
+      const user = await User.create(
+        { code, password: hashedPassword, role_id: userRole.id, upload_id: null },
+        { transaction }
+      );
+
+      if (user_type === "student") {
+        await Student.create(
+          { ...names, user_id: user.id, class_id, specialization_id, school_id: organization_id },
+          { transaction }
+        );
+        return user;
+      }
+
+      const [employeeRole] = await EmployeeRole.findOrCreate({
+        where: { title: typeConfig.employeeRole },
+        transaction,
+      });
+
+      const employee = await Employee.create(
+        { ...names, organization_id, role_id: employeeRole.id, user_id: user.id },
+        { transaction }
+      );
+
+      if (user_type === "teacher") {
+        await Teacher.create(
+          { planned_sessions: 0, employee_id: employee.id, department_id },
+          { transaction }
+        );
+      }
+
+      if (typeConfig.adminRole) {
+        await AdminsUsers.create(
+          { user_id: user.id, role: typeConfig.adminRole },
+          { transaction }
+        );
+      }
+
+      return user;
+    });
+
+    res.status(201).json({
+      status: "success",
+      message: "User created successfully",
+      user: {
+        id: user.id,
+        name: `${names.first_name} ${names.middle_name} ${names.last_name}`.replace(/\s+/g, " ").trim(),
+        user_type,
+        organization: organization.name,
+        username: user.code,
+        password,
+      },
+    });
+  } catch (error) {
+    console.error("Create User Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.userProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id, {
+      attributes: ["id", "code"],
+      include: [
+        { model: UserRole, as: "role", attributes: ["title"] },
+        {
+          model: Employee,
+          as: "employee",
+          required: false,
+          attributes: ["first_name", "middle_name", "last_name", "email", "organization_id"],
+          include: [{ model: EmployeeRole, as: "role", attributes: ["title"] }],
+        },
+        {
+          model: Student,
+          as: "student",
+          required: false,
+          attributes: ["first_name", "middle_name", "last_name", "email", "school_id"],
+        },
       ],
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const person = user.employee || user.student;
+    const organizationId = user.employee?.organization_id || user.student?.school_id;
+    const organization = organizationId
+      ? await Organization.findByPk(organizationId, { attributes: ["name"] })
+      : null;
+
+    // every user starts with 100 points, so create the row on first lookup
+    const [userPoints] = await UsersPoints.findOrCreate({
+      where: { user_id: user.id },
+      defaults: { points: 100 },
+    });
+
+    const history = await PointsHistory.findAll({
+      attributes: ["id", "status", "createdAt", "updatedAt"],
+      where: { user_id: userPoints.id },
       include: [
         {
-          model: UsersPoints,
-          as: "userPoints",
-          required: true,   // force inner join
-          attributes: [],
+          model: RewardsAndPunishments,
+          as: "point",
+          required: false,
+          attributes: ["name", "points", "type"],
+        },
+        {
+          model: AdminsUsers,
+          as: "admin",
+          required: false,
+          attributes: ["id"],
           include: [
             {
               model: User,
-              as: "user",
-              required: true, // force inner join
-              attributes: [],
+              as: "userPoints",
+              required: false,
+              attributes: ["id"],
               include: [
                 {
                   model: Employee,
                   as: "employee",
-                  required: true, // force inner join
-                  attributes: [],
-                  where: { organization_id: orgs },
+                  required: false,
+                  attributes: ["first_name", "middle_name", "last_name"],
                 },
               ],
             },
           ],
         },
-        {
-          model: RewardsAndPunishments,
-          as: "point",
-          required: true, // force inner join
-          attributes: [],
-        },
       ],
-      where: { status: "accepted" },
-      group: [fn("DATE_PART", "month", col("PointsHistory.updatedAt"))],
-      raw: true,
+      order: [["createdAt", "DESC"]],
     });
 
-    const months = monthsArray.map((m) => {
-      const found = results.find(
-        (r) => Number(r.monthNumber) === m.monthNumber
-      );
-      return {
-        monthNumber: m.monthNumber,
-        month: m.month,
-        performance: found ? Number(found.totalPoints) : 0,
-      };
-    });
+    const fullName = (p) =>
+      p ? [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(" ") : null;
 
     res.status(200).json({
       status: "success",
-      message: "Aggregated performance across selected orgs per month",
-      data: months,
+      message: "data got fetched successfully",
+      profile: {
+        id: user.id,
+        code: user.code,
+        name: fullName(person),
+        email: person?.email || null,
+        role: user.employee?.role?.title || user.role?.title || null,
+        organization: organization?.name || null,
+        points: userPoints.points,
+      },
+      history: history.map((item) => ({
+        id: item.id,
+        status: item.status,
+        date: item.updatedAt,
+        name: item.point?.name || null,
+        points: item.point?.points ?? null,
+        type: item.point?.type || null,
+        given_by: fullName(item.admin?.userPoints?.employee),
+      })),
     });
   } catch (error) {
-    console.error("Error in monthlyPerformance:", error);
-    res.status(500).json({ message: "Server error", error });
+    console.error("User Profile Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// the navbar logo is stored as uploads/neqaty/logo-<timestamp>.<ext>; no file means the default logo
+const listLogoFiles = () => {
+  if (!fs.existsSync(LOGO_DIR)) return [];
+  return fs.readdirSync(LOGO_DIR).filter((name) => name.startsWith("logo-")).sort();
+};
+
+const logoUrl = (name) => (name ? `/uploads/neqaty/${name}` : null);
+
+exports.getLogo = async (req, res) => {
+  try {
+    const files = listLogoFiles();
+    res.status(200).json({ status: "success", logo: logoUrl(files[files.length - 1]) });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.uploadLogo = (req, res) => {
+  uploadNeqatyLogo(req, res, (err) => {
+    if (err) {
+      const message = err.code === "LIMIT_FILE_SIZE" ? "Image must be 2MB or smaller" : err.message;
+      return res.status(400).json({ message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: "Logo image is required" });
+    }
+    try {
+      // keep only the new logo
+      listLogoFiles()
+        .filter((name) => name !== req.file.filename)
+        .forEach((name) => fs.unlinkSync(path.join(LOGO_DIR, name)));
+
+      res.status(200).json({
+        status: "success",
+        message: "Logo updated successfully",
+        logo: logoUrl(req.file.filename),
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  });
+};
+
+exports.resetLogo = async (req, res) => {
+  try {
+    listLogoFiles().forEach((name) => fs.unlinkSync(path.join(LOGO_DIR, name)));
+    res.status(200).json({ status: "success", message: "Logo reset to default", logo: null });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

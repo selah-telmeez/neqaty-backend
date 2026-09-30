@@ -3,12 +3,19 @@ const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
 const config = require('../../config/config.js')[process.env.NODE_ENV || 'development'];
 
-// Initialize Sequelize
-const sequelize = new Sequelize(config.database, config.username, config.password, {
-  host: config.host,
+// Initialize Sequelize (from DATABASE_URL when set, otherwise from the DB_* variables)
+const options = {
   dialect: config.dialect,
+  dialectOptions: config.dialectOptions,
   logging: false,
-});
+};
+const sequelize = config.url
+  ? new Sequelize(config.url, options)
+  : new Sequelize(config.database, config.username, config.password, {
+    ...options,
+    host: config.host,
+    port: config.port,
+  });
 
 const db = {};
 

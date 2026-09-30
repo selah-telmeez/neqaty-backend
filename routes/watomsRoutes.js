@@ -3,7 +3,6 @@ const router = express.Router();
 const watomsController = require("../controllers/watomsController");
 const uploadNews = require("../middleware/uploadNewsMiddleware");
 const peRoutes = require("./peRoutes");
-const pdmsRoutes = require("./pdmsRoutes");
 const watomsDataRoutes = require("./watomsData");
 const uploadCv = require("../middleware/uploadCv");
 
@@ -19,7 +18,6 @@ router.get("/workshop-performance-report", watomsController.fetchWorkshopPerform
 // Data
 router.use("/data", watomsDataRoutes);
 router.use("/pe", peRoutes);
-router.use("/pdms", pdmsRoutes);
 router.post("/news", uploadNews.single('image'), watomsController.publishNews);
 router.get("/news", watomsController.getNewsList);
 router.post("/news/:newsId/images", uploadNews.single('image'), watomsController.addNewsImage);

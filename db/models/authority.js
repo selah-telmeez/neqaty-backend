@@ -14,9 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         timestamps: true
     });
 
-    Authority.associate = (models) => {
-        Authority.hasMany(models.Project, { foreignKey: 'authority_id', as: 'projects' });
-    };
+    Authority.associate = (models) => {};
 
     return Authority;
 };

@@ -28,11 +28,6 @@ module.exports = (sequelize, DataTypes) => {
     upload_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      references: {
-        model: 'uploads',
-        key: 'id',
-      },
-      onDelete: 'RESTRICT',
     },
     deleted: {
       type: DataTypes.BOOLEAN,
@@ -50,32 +45,10 @@ module.exports = (sequelize, DataTypes) => {
 
   User.associate = (models) => {
     User.belongsTo(models.UserRole, { foreignKey: 'role_id', as: 'role' });
-    User.hasMany(models.CurriculumReport, { foreignKey: 'Assessor_id', as: 'reports' });
-    User.hasMany(models.SchoolDocument, { foreignKey: 'user_id', as: 'documents' });
     User.hasOne(models.Employee, { foreignKey: 'user_id', as: 'employee' });
-    User.hasMany(models.IndividualReport, { foreignKey: 'Assessor_id', as: 'assessorReports' });
-    User.hasMany(models.IndividualReport, { foreignKey: 'Assessee_id', as: 'assesseeReports' });
     User.hasOne(models.Student, { foreignKey: 'user_id', as: 'student' });
-    User.hasMany(models.studentBehavior, { foreignKey: 'offender_id', as: 'offender_behaviors' });
-    User.hasMany(models.studentBehavior, { foreignKey: 'social_worker_id', as: 'social_worker_behaviors' });
-    User.hasMany(models.ScheduledRole, { foreignKey: 'user_id', as: 'assignedRole' });
-    User.hasMany(models.EnvironmentReports, { foreignKey: 'user_id', as: 'envReports' });
-    User.hasMany(models.EmployeeCheckInOut, { foreignKey: 'user_id', as: 'empCheckInOut' });
     User.hasOne(models.UsersPoints, { foreignKey: 'user_id', as: 'points' });
     User.hasOne(models.AdminsUsers, { foreignKey: 'user_id', as: 'admin' });
-    User.hasMany(models.Task, { foreignKey: 'assigner_id', as: 'task_assigner' });
-    User.hasMany(models.Task, { foreignKey: 'assignee_id', as: 'task_assignee' });
-    User.hasMany(models.Task, { foreignKey: 'reviewer_id', as: 'task_reviewer' });
-    User.hasMany(models.Task, { foreignKey: 'manager_id', as: 'task_manager' });
-    User.hasOne(models.PeCandidate, { foreignKey: 'user_id', as: 'candidate' });
-    User.hasMany(models.ChatMessage, { foreignKey: "sender_id", as: "sender" });
-    User.hasMany(models.EmployeePerformanceReport, { foreignKey: "user_id", as: "employee_performance_reports" });
-    User.hasMany(models.McqExam, { foreignKey: 'user_id', as: 'mcq_exams' });
-    User.hasMany(models.ManagersSurvey, { foreignKey: 'user_id', as: 'managers_surveys' });
-    User.hasMany(models.Incident, { foreignKey: 'user_id', as: 'incident' });
-    User.hasOne(models.Parent, { foreignKey: "user_id", as: "parent" });
-    User.hasMany(models.ClassroomUpload, { foreignKey: "user_id", as: "classroom_uploads" });
-    User.belongsTo(models.Upload, { foreignKey: 'upload_id', as: 'upload' });
   };
 
   return User;

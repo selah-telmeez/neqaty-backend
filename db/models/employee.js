@@ -61,11 +61,6 @@ module.exports = (sequelize, DataTypes) => {
         department_id: {
             type: DataTypes.INTEGER,
             allowNull: true,
-            references: {
-                model: 'employee_departments',
-                key: 'id',
-            },
-            onDelete: 'RESTRICT'
         },
         id_number: {
             type: DataTypes.STRING,
@@ -115,16 +110,7 @@ module.exports = (sequelize, DataTypes) => {
         Employee.belongsTo(models.EmployeeRole, { foreignKey: 'role_id', as: 'role' });
         Employee.belongsTo(models.Organization, { foreignKey: 'organization_id', as: 'organization' });
         Employee.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
-        Employee.hasMany(models.EmployeeAbsence, { foreignKey: 'employee_id', as: 'absences' });
-        Employee.hasMany(models.Substitute, { foreignKey: 'substitute_id', as: 'replacement' });
-        Employee.hasMany(models.Substitute, { foreignKey: 'replacement_id', as: 'substitute' });
         Employee.hasOne(models.Teacher, { foreignKey: 'employee_id', as: 'teacher' });
-        Employee.hasMany(models.WorkLatness, { foreignKey: 'emp_id', as: 'latness' });
-        Employee.hasMany(models.TeacherEvaluation, { foreignKey: 'employee_id', as: 'evaluates' });
-        Employee.hasMany(models.WatomsEmployeeDocumentCategory, { foreignKey: 'employee_id' });
-        Employee.hasMany(models.ManagerEvaluation, { foreignKey: 'employee_id', as: 'manager_evaluations' });
-        Employee.hasMany(models.ManagerComment, { foreignKey: 'employee_id', as: 'employee' });
-        Employee.belongsTo(models.EmployeeDepartment, { foreignKey: 'department_id', as: 'department' });
     };
 
     return Employee;

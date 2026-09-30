@@ -1,28 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const pdmsController = require("../controllers/pdmsController");
 const wisdomController = require("../controllers/wisdomController");
-const wisdomDataRoutes = require("./wisdomData");
 
-router.use("/data", wisdomDataRoutes);
-// cleaned apis
-router.get("/dashboard/:year/:stage/:subject/:specialization/:from/:to", wisdomController.fetchWisdomDashboard);
-router.get("/dashboard/general-information", wisdomController.fetchWisdomDashboardGeneralInformation);
-router.get("/schools", wisdomController.fetchWisdomRelatedSchools);
-router.get("/forms", wisdomController.fetchWisdomForms);
-router.post("/create-new-grade-book", wisdomController.createNewGradeBook);
-router.get("/gradebooks", wisdomController.GetGradeBooks);
-router.post("/insert-grade-book-score", wisdomController.insertGradeBookScore);
-router.post("/teacher/absence", wisdomController.insertTeacherAbsence);
-router.post("/employee-absence", wisdomController.insertEmployeeAbsence);
-router.post("/teacher-subject", wisdomController.changeTeacherSubject);
-// old apis
-router.get("/pdms/forms", pdmsController.allWisdomForms);
-router.get("/pdms/pedagogicalTest", pdmsController.fetchPedagogicalTest);
-router.post("/pdms/mcqExam", pdmsController.submitMcqExamAnswers);
-router.get("/pdms/dashboard", pdmsController.fetchWisdomPdmsDashboard);
-// old specialization / subjects api
-router.get("/subjects", wisdomController.fetchWisdomSubjects);
-router.get("/specializations", wisdomController.fetchWisdomSpecializations);
+router.get("/data/employees", wisdomController.getEmployees);
 
 module.exports = router;

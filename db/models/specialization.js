@@ -26,8 +26,6 @@ module.exports = (sequelize, DataTypes) => {
 
     Specialization.associate = (models) => {
         Specialization.hasMany(models.Student, { foreignKey: 'specialization_id', as: 'students' });
-        Specialization.hasMany(models.SubjectSpecialization, { foreignKey: 'specialization_id', as: 'subject' });
-        Specialization.belongsToMany(models.Organization, { through: 'organization_specializations', as: 'organizations', foreignKey: 'specialization_id' });
         Specialization.hasMany(models.Class, { foreignKey: 'specialization_id', as: 'classes' });
     };
 
