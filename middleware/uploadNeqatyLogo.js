@@ -1,23 +1,11 @@
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
 
-const LOGO_DIR = path.join(__dirname, "..", "uploads", "neqaty");
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    fs.mkdirSync(LOGO_DIR, { recursive: true });
-    cb(null, LOGO_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || ".png";
-    cb(null, `logo-${Date.now()}${ext}`);
-  },
-});
-
+// kept in memory (not on disk) because serverless hosts have a read-only file system;
+// the controller saves the image in the database
 const uploadNeqatyLogo = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!ALLOWED_TYPES.includes(file.mimetype)) {
@@ -27,4 +15,4 @@ const uploadNeqatyLogo = multer({
   },
 }).single("logo");
 
-module.exports = { uploadNeqatyLogo, LOGO_DIR };
+module.exports = { uploadNeqatyLogo };

@@ -13,13 +13,12 @@ const {
   Department,
   Class,
   Specialization,
+  Setting,
 } = require("../db/models");
 const { fn, col, Op } = require("sequelize");
 const crypto = require("crypto");
 const { hashPassword } = require("../utils/hashPassword");
-const fs = require("fs");
-const path = require("path");
-const { uploadNeqatyLogo, LOGO_DIR } = require("../middleware/uploadNeqatyLogo");
+const { uploadNeqatyLogo } = require("../middleware/uploadNeqatyLogo");
 
 exports.viewVtcPoints = async (req, res) => {
   try {
@@ -881,25 +880,40 @@ exports.userProfile = async (req, res) => {
   }
 };
 
-// the navbar logo is stored as uploads/neqaty/logo-<timestamp>.<ext>; no file means the default logo
-const listLogoFiles = () => {
-  if (!fs.existsSync(LOGO_DIR)) return [];
-  return fs.readdirSync(LOGO_DIR).filter((name) => name.startsWith("logo-")).sort();
-};
+// the navbar logo is stored in the settings table as JSON { mimetype, data (base64) };
+// no row means the default logo
+const LOGO_KEY = "neqaty_logo";
 
-const logoUrl = (name) => (name ? `/uploads/neqaty/${name}` : null);
+// url of the image endpoint; the version changes on every upload so browsers don't show an old logo
+const logoUrl = (setting) =>
+  setting ? `/api/v1/neqaty/logo/image?v=${new Date(setting.updatedAt).getTime()}` : null;
 
 exports.getLogo = async (req, res) => {
   try {
-    const files = listLogoFiles();
-    res.status(200).json({ status: "success", logo: logoUrl(files[files.length - 1]) });
+    const setting = await Setting.findByPk(LOGO_KEY, { attributes: ["key", "updatedAt"] });
+    res.status(200).json({ status: "success", logo: logoUrl(setting) });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.getLogoImage = async (req, res) => {
+  try {
+    const setting = await Setting.findByPk(LOGO_KEY);
+    if (!setting) {
+      return res.status(404).json({ message: "No custom logo" });
+    }
+    const { mimetype, data } = JSON.parse(setting.value);
+    res.set("Content-Type", mimetype);
+    res.set("Cache-Control", "public, max-age=31536000, immutable");
+    res.send(Buffer.from(data, "base64"));
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 exports.uploadLogo = (req, res) => {
-  uploadNeqatyLogo(req, res, (err) => {
+  uploadNeqatyLogo(req, res, async (err) => {
     if (err) {
       const message = err.code === "LIMIT_FILE_SIZE" ? "Image must be 2MB or smaller" : err.message;
       return res.status(400).json({ message });
@@ -908,15 +922,17 @@ exports.uploadLogo = (req, res) => {
       return res.status(400).json({ message: "Logo image is required" });
     }
     try {
-      // keep only the new logo
-      listLogoFiles()
-        .filter((name) => name !== req.file.filename)
-        .forEach((name) => fs.unlinkSync(path.join(LOGO_DIR, name)));
+      const value = JSON.stringify({
+        mimetype: req.file.mimetype,
+        data: req.file.buffer.toString("base64"),
+      });
+      await Setting.upsert({ key: LOGO_KEY, value });
+      const setting = await Setting.findByPk(LOGO_KEY, { attributes: ["key", "updatedAt"] });
 
       res.status(200).json({
         status: "success",
         message: "Logo updated successfully",
-        logo: logoUrl(req.file.filename),
+        logo: logoUrl(setting),
       });
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
@@ -926,7 +942,7 @@ exports.uploadLogo = (req, res) => {
 
 exports.resetLogo = async (req, res) => {
   try {
-    listLogoFiles().forEach((name) => fs.unlinkSync(path.join(LOGO_DIR, name)));
+    await Setting.destroy({ where: { key: LOGO_KEY } });
     res.status(200).json({ status: "success", message: "Logo reset to default", logo: null });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });

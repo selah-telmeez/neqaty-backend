@@ -1,6 +1,5 @@
 require("dotenv").config({ path: `${process.cwd()}/.env` });
 const express = require("express");
-const path = require("path");
 const cors = require("cors"); //to let a front end uses the apis
 const authRoutes = require("./routes/authRoutes");
 const usersRoutes = require("./routes/usersRoutes");
@@ -26,8 +25,14 @@ app.options('/api/v1/auth/login', (req, res) => {
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
-// Serve static files from uploads directory (neqaty logo)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// make sure the database is ready (created / filled) before handling requests
+const databaseReady = bootstrapDatabase().catch((error) => {
+  console.error("Error preparing the database:", error);
+});
+app.use(async (req, res, next) => {
+  await databaseReady;
+  next();
+});
 
 // Routes
 app.use("/api/v1/auth", authRoutes);
@@ -48,13 +53,11 @@ app.use(errorHandler);
 // hosts like Render provide PORT; locally APP_PORT is used
 const PORT = process.env.PORT || process.env.APP_PORT || 4000;
 
-// create / fill the database if needed, then start accepting requests
-bootstrapDatabase()
-  .catch((error) => console.error("Error preparing the database:", error))
-  .finally(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+// on Vercel the app runs as a serverless function (api/index.js), so it doesn't listen itself
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
   });
+}
 
 module.exports = app;

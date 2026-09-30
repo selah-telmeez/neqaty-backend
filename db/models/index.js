@@ -6,6 +6,8 @@ const config = require('../../config/config.js')[process.env.NODE_ENV || 'develo
 // Initialize Sequelize (from DATABASE_URL when set, otherwise from the DB_* variables)
 const options = {
   dialect: config.dialect,
+  // explicit so serverless bundlers (Vercel) include the pg driver
+  dialectModule: require('pg'),
   dialectOptions: config.dialectOptions,
   logging: false,
 };

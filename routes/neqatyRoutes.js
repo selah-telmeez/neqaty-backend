@@ -16,6 +16,7 @@ router.get("/admin/signup-options", neqatyController.signupOptions);
 router.post("/admin/users", neqatyController.createUser);
 router.get("/profile/:id", neqatyController.userProfile);
 router.get("/logo", neqatyController.getLogo);
+router.get("/logo/image", neqatyController.getLogoImage);
 router.post("/admin/logo", neqatyController.uploadLogo);
 router.delete("/admin/logo", neqatyController.resetLogo);
 

@@ -88,6 +88,9 @@ const bootstrapDatabase = async () => {
     console.log("Database was empty; tables created from the models.");
   }
 
+  // tables added after the first setup (e.g. settings) are created here when missing
+  await db.Setting.sync();
+
   if ((await db.User.count()) === 0) {
     await seedDefaultData(db);
   }
