@@ -6,13 +6,10 @@ const {
   User,
   Student,
   Employee,
-  Teacher,
   UserRole,
   EmployeeRole,
   Organization,
-  Department,
-  Class,
-  Specialization,
+  Authority,
   Setting,
 } = require("../db/models");
 const { fn, col, Op } = require("sequelize");
@@ -636,27 +633,25 @@ exports.deleteVtcPoint = async (req, res) => {
 // user_type -> titles in users_role / employees_role (and admins_users role for admins)
 const NEW_USER_TYPES = {
   admin: { userRole: "admin", employeeRole: "ADMIN", adminRole: "admin" },
-  teacher: { userRole: "Teacher", employeeRole: "Teacher" },
   employee: { userRole: "Employee", employeeRole: "Employee" },
-  student: { userRole: "Student" },
 };
 
 exports.signupOptions = async (req, res) => {
   try {
-    const [organizations, departments, classes, specializations] = await Promise.all([
-      Organization.findAll({ attributes: ["id", "name"], where: { deleted: false }, order: [["name", "ASC"]] }),
-      Department.findAll({ attributes: ["id", "Name"], where: { deleted: false }, order: [["Name", "ASC"]] }),
-      Class.findAll({ attributes: ["id", "name", "specialization_id"], where: { deleted: false }, order: [["name", "ASC"]] }),
-      Specialization.findAll({ attributes: ["id", "name"], where: { deleted: false }, order: [["name", "ASC"]] }),
+    const [organizations, authorities] = await Promise.all([
+      Organization.findAll({
+        attributes: ["id", "name", "city", "type", "authority_id"],
+        where: { deleted: false },
+        order: [["name", "ASC"]],
+      }),
+      Authority.findAll({ attributes: ["id", "name"], order: [["id", "ASC"]] }),
     ]);
 
     res.status(200).json({
       status: "success",
       message: "data got fetched successfully",
       organizations,
-      departments,
-      classes,
-      specializations,
+      authorities,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -672,9 +667,6 @@ exports.createUser = async (req, res) => {
       last_name,
       email,
       organization_id,
-      department_id,
-      class_id,
-      specialization_id,
     } = req.body;
 
     const typeConfig = NEW_USER_TYPES[user_type];
@@ -683,12 +675,6 @@ exports.createUser = async (req, res) => {
     }
     if (!first_name?.trim() || !last_name?.trim() || !organization_id) {
       return res.status(400).json({ message: "First name, last name and organization are required" });
-    }
-    if (user_type === "teacher" && !department_id) {
-      return res.status(400).json({ message: "Department is required for teachers" });
-    }
-    if (user_type === "student" && (!class_id || !specialization_id)) {
-      return res.status(400).json({ message: "Class and specialization are required for students" });
     }
 
     const organization = await Organization.findByPk(organization_id);
@@ -721,30 +707,15 @@ exports.createUser = async (req, res) => {
         { transaction }
       );
 
-      if (user_type === "student") {
-        await Student.create(
-          { ...names, user_id: user.id, class_id, specialization_id, school_id: organization_id },
-          { transaction }
-        );
-        return user;
-      }
-
       const [employeeRole] = await EmployeeRole.findOrCreate({
         where: { title: typeConfig.employeeRole },
         transaction,
       });
 
-      const employee = await Employee.create(
+      await Employee.create(
         { ...names, organization_id, role_id: employeeRole.id, user_id: user.id },
         { transaction }
       );
-
-      if (user_type === "teacher") {
-        await Teacher.create(
-          { planned_sessions: 0, employee_id: employee.id, department_id },
-          { transaction }
-        );
-      }
 
       if (typeConfig.adminRole) {
         await AdminsUsers.create(
@@ -770,6 +741,50 @@ exports.createUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Create User Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// new organizations are schools so they show up in the authority / vtc filters
+exports.createOrganization = async (req, res) => {
+  try {
+    const { name, city, authority_id } = req.body;
+
+    if (!name?.trim() || !authority_id) {
+      return res.status(400).json({ message: "Name and authority are required" });
+    }
+
+    const authority = await Authority.findByPk(authority_id);
+    if (!authority) {
+      return res.status(400).json({ message: "Authority not found" });
+    }
+
+    const exists = await Organization.findOne({
+      where: { name: { [Op.iLike]: name.trim() } },
+    });
+    if (exists) {
+      return res.status(409).json({ message: "An organization with this name already exists" });
+    }
+
+    const organization = await Organization.create({
+      name: name.trim(),
+      city: city?.trim() || "",
+      type: "school",
+      authority_id,
+    });
+
+    res.status(201).json({
+      status: "success",
+      message: "Organization created successfully",
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        city: organization.city,
+        type: organization.type,
+        authority_id: organization.authority_id,
+      },
+    });
+  } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

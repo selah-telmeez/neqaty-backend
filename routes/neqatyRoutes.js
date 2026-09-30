@@ -14,6 +14,7 @@ router.get("/watoms/monthly/performance", neqatyController.watomsMonthlyPerforma
 router.get("/monthly/performance/:id", neqatyController.employeeMonthlyPerformance);
 router.get("/admin/signup-options", neqatyController.signupOptions);
 router.post("/admin/users", neqatyController.createUser);
+router.post("/admin/organizations", neqatyController.createOrganization);
 router.get("/profile/:id", neqatyController.userProfile);
 router.get("/logo", neqatyController.getLogo);
 router.get("/logo/image", neqatyController.getLogoImage);
