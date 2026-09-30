@@ -36,6 +36,49 @@ exports.viewVtcPoints = async (req, res) => {
   }
 };
 
+// error with an http status, for validation problems inside transactions
+class RequestError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+// adds one point item to a user (users.id) right away and records it in the history
+const applyPoint = async ({ adminId, userId, pointId }, transaction) => {
+  const admin = await AdminsUsers.findByPk(adminId, { transaction });
+  if (!admin) {
+    throw new RequestError(400, "Admin user not found");
+  }
+  const point = await RewardsAndPunishments.findOne({
+    where: { id: pointId, type: VTC_POINT_TYPES },
+    transaction,
+  });
+  if (!point) {
+    throw new RequestError(400, "Point record not found");
+  }
+
+  // users without a points row start from 0
+  const [userPoints] = await UsersPoints.findOrCreate({
+    where: { user_id: userId },
+    defaults: { points: 0 },
+    transaction,
+  });
+  await userPoints.increment({ points: point.points }, { transaction });
+
+  const history = await PointsHistory.create(
+    {
+      admin_id: adminId,
+      user_id: userPoints.id,
+      point_id: point.id,
+      status: "accepted",
+    },
+    { transaction }
+  );
+
+  return { user: userPoints, history, status: "accepted" };
+};
+
 exports.updatePoints = async (req, res) => {
   try {
     const { admin_id, user_id, point } = req.body;
@@ -44,80 +87,66 @@ exports.updatePoints = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const result = await UsersPoints.sequelize.transaction(
-      async (transaction) => {
-        let user;
-        const userPoints = await UsersPoints.findOne({
-          where: { user_id },
-          transaction,
-          lock: transaction.LOCK.UPDATE,
-        });
-
-        if (!userPoints) {
-          const newUser = await UsersPoints.create(
-            {
-              points: 100,
-              user_id,
-            },
-            { transaction });
-          user = newUser;
-        } else {
-          user = userPoints;
-        }
-
-        const adminRole = await AdminsUsers.findOne({
-          where: { id: admin_id },
-          transaction,
-          lock: transaction.LOCK.UPDATE,
-        });
-
-        if (!adminRole) {
-          throw new Error("Admin user not found");
-        }
-
-        let status;
-        if (adminRole.role === "admin" || adminRole.role === "super_admin") {
-          status = "pending";
-        } else if (adminRole.role === "ceo") {
-          const pointDetails = await RewardsAndPunishments.findOne({
-            where: { id: point },
-            transaction,
-          });
-          if (!pointDetails) {
-            throw new Error("Point record not found");
-          }
-          status = "accepted";
-          await user.increment(
-            { points: pointDetails.points },
-            { transaction }
-          );
-        } else {
-          throw new Error("Unauthorized admin role");
-        }
-
-        const history = await PointsHistory.create(
-          {
-            admin_id,
-            user_id: user.id,
-            point_id: point,
-            status,
-          },
-          { transaction }
-        );
-
-        return { user, history, status };
-      }
+    const result = await UsersPoints.sequelize.transaction((transaction) =>
+      applyPoint({ adminId: admin_id, userId: user_id, pointId: point }, transaction)
     );
 
     res.status(200).json({
       status: "success",
-      message: `Points ${result.status === "accepted" ? "updated" : "pending approval"
-        } and history recorded successfully.`,
+      message: "Points updated and history recorded successfully.",
       result,
     });
   } catch (error) {
     console.error("Update Points Error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(error.status || 500).json({ message: error.status ? error.message : "Server error", error: error.message });
+  }
+};
+
+// rows: [{ row, username, point }] where point is the item id or its exact name.
+// Everything is checked first; nothing is applied if any row is invalid.
+exports.bulkAddPoints = async (req, res) => {
+  try {
+    const { admin_id, rows } = req.body;
+    if (!admin_id || !Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ message: "admin_id and rows are required" });
+    }
+    if (rows.length > 1000) {
+      return res.status(400).json({ message: "A file can contain at most 1000 rows" });
+    }
+
+    const codes = [...new Set(rows.map((r) => Number(r.username)).filter(Number.isInteger))];
+    const [users, points] = await Promise.all([
+      User.findAll({ attributes: ["id", "code"], where: { code: codes, deleted: false } }),
+      RewardsAndPunishments.findAll({ attributes: ["id", "name"], where: { type: VTC_POINT_TYPES } }),
+    ]);
+    const userByCode = new Map(users.map((u) => [u.code, u]));
+    const pointById = new Map(points.map((p) => [p.id, p]));
+    const pointByName = new Map(points.map((p) => [String(p.name).trim(), p]));
+
+    const errors = [];
+    const valid = [];
+    for (const row of rows) {
+      const user = userByCode.get(Number(row.username));
+      const pointValue = String(row.point ?? "").trim();
+      const point = pointById.get(Number(pointValue)) || pointByName.get(pointValue);
+      if (!user) errors.push({ row: row.row, message: `اسم المستخدم "${row.username ?? ""}" غير موجود` });
+      else if (!point) errors.push({ row: row.row, message: `البند "${pointValue}" غير موجود` });
+      else valid.push({ userId: user.id, pointId: point.id });
+    }
+    if (errors.length) {
+      return res.status(400).json({ message: "Some rows are invalid", errors });
+    }
+
+    await UsersPoints.sequelize.transaction(async (transaction) => {
+      for (const item of valid) {
+        await applyPoint({ adminId: admin_id, ...item }, transaction);
+      }
+    });
+
+    res.status(200).json({ status: "success", message: "Points added successfully", applied: valid.length });
+  } catch (error) {
+    console.error("Bulk Points Error:", error);
+    res.status(error.status || 500).json({ message: error.status ? error.message : "Server error", error: error.message });
   }
 };
 
@@ -315,10 +344,10 @@ exports.viewUserPoints = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // every user starts with 100 points, so create the row on first lookup
+    // users without a points row start from 0; create it on first lookup
     const [userPoints] = await UsersPoints.findOrCreate({
       where: { user_id },
-      defaults: { points: 100 },
+      defaults: { points: 0 },
     });
     const Points = { points: userPoints.points };
 
@@ -533,6 +562,74 @@ exports.employeeMonthlyPerformance = async (req, res) => {
   }
 };
 
+// the last `count` weeks (starting Saturday, Cairo time), oldest first
+const CAIRO_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo", year: "numeric", month: "2-digit", day: "2-digit" });
+const cairoDay = (date) => new Date(`${CAIRO_DAY.format(date)}T00:00:00Z`); // the Cairo calendar day, as UTC midnight
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const lastWeeks = (count) => {
+  const today = cairoDay(new Date());
+  const sinceSaturday = (today.getUTCDay() + 1) % 7;
+  const thisWeek = new Date(today.getTime() - sinceSaturday * DAY_MS);
+  const weeks = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const start = new Date(thisWeek.getTime() - i * 7 * DAY_MS);
+    weeks.push({
+      start,
+      week: `${String(start.getUTCDate()).padStart(2, "0")}/${String(start.getUTCMonth() + 1).padStart(2, "0")}`,
+    });
+  }
+  // one extra day so points near midnight (Cairo vs UTC) are not missed; bucketing below is exact
+  return { weeks, since: new Date(weeks[0].start.getTime() - DAY_MS) };
+};
+
+// sums accepted points per week; userId (users.id) limits it to one user
+const weeklyPerformance = async (userId) => {
+  const { weeks, since } = lastWeeks(12);
+  const history = await PointsHistory.findAll({
+    attributes: ["updatedAt"],
+    where: { status: "accepted", updatedAt: { [Op.gte]: since } },
+    include: [
+      { model: RewardsAndPunishments, as: "point", required: true, attributes: ["points"] },
+      {
+        model: UsersPoints,
+        as: "userPoints",
+        required: true,
+        attributes: [],
+        ...(userId ? { where: { user_id: userId } } : {}),
+      },
+    ],
+  });
+
+  const totals = weeks.map(() => 0);
+  for (const item of history) {
+    const day = cairoDay(item.updatedAt).getTime();
+    const index = weeks.findIndex((w) => day >= w.start.getTime() && day < w.start.getTime() + 7 * DAY_MS);
+    if (index >= 0) totals[index] += item.point.points;
+  }
+  return weeks.map((w, i) => ({
+    week: w.week,
+    start: w.start.toISOString().slice(0, 10),
+    performance: totals[i],
+  }));
+};
+
+exports.weeklyPerformance = async (req, res) => {
+  try {
+    res.status(200).json({ status: "success", data: await weeklyPerformance() });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.userWeeklyPerformance = async (req, res) => {
+  try {
+    res.status(200).json({ status: "success", data: await weeklyPerformance(req.params.id) });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 const VTC_POINT_TYPES = ["vtc_reward", "vtc_punishment"];
 
 const validateVtcPoint = ({ name, type, points }) => {
@@ -630,11 +727,63 @@ exports.deleteVtcPoint = async (req, res) => {
   }
 };
 
-// user_type -> titles in users_role / employees_role (and admins_users role for admins)
+// user_type -> titles in users_role / employees_role and the admins_users role
+// super admin: admin page + points, admin: points only, employee: own profile only
 const NEW_USER_TYPES = {
+  super_admin: { userRole: "super admin", employeeRole: "SUPER ADMIN", adminRole: "super_admin" },
   admin: { userRole: "admin", employeeRole: "ADMIN", adminRole: "admin" },
   employee: { userRole: "Employee", employeeRole: "Employee" },
 };
+
+const generatePassword = () => String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+
+const parseStartingPoints = (value) => {
+  if (value === undefined || value === null || value === "") return 0;
+  const points = Number(value);
+  return Number.isInteger(points) ? points : null;
+};
+
+// locks code generation for the transaction and returns the next free username (code)
+const nextUserCode = async (transaction) => {
+  await User.sequelize.query("SELECT pg_advisory_xact_lock(hashtext('users_code'))", { transaction });
+  const maxCode = await User.max("code", { transaction });
+  return (maxCode || 0) + 1;
+};
+
+// creates user + employee (+ admin + starting points) inside the given transaction
+const createUserRecord = async ({ typeConfig, code, hashedPassword, person, organizationId, jobTitle, startingPoints }, transaction) => {
+  const [userRole] = await UserRole.findOrCreate({ where: { title: typeConfig.userRole }, transaction });
+  const user = await User.create(
+    { code, password: hashedPassword, role_id: userRole.id, upload_id: null },
+    { transaction }
+  );
+
+  // the job title from the excel file is used as the employee role (shown in the type filter)
+  const [employeeRole] = await EmployeeRole.findOrCreate({
+    where: { title: jobTitle || typeConfig.employeeRole },
+    transaction,
+  });
+  await Employee.create(
+    { ...person, organization_id: organizationId, role_id: employeeRole.id, user_id: user.id },
+    { transaction }
+  );
+
+  if (typeConfig.adminRole) {
+    await AdminsUsers.create({ user_id: user.id, role: typeConfig.adminRole }, { transaction });
+  }
+  await UsersPoints.create({ user_id: user.id, points: startingPoints }, { transaction });
+  return user;
+};
+
+const cleanPerson = ({ first_name, middle_name, last_name, email }) => ({
+  first_name: String(first_name || "").trim(),
+  middle_name: String(middle_name || "").trim(),
+  last_name: String(last_name || "").trim(),
+  email: String(email || "").trim().toLowerCase(),
+});
+
+const fullName = (p) =>
+  p ? [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(" ") : null;
 
 exports.signupOptions = async (req, res) => {
   try {
@@ -660,21 +809,19 @@ exports.signupOptions = async (req, res) => {
 
 exports.createUser = async (req, res) => {
   try {
-    const {
-      user_type,
-      first_name,
-      middle_name,
-      last_name,
-      email,
-      organization_id,
-    } = req.body;
+    const { user_type, organization_id, starting_points } = req.body;
 
     const typeConfig = NEW_USER_TYPES[user_type];
     if (!typeConfig) {
       return res.status(400).json({ message: "Invalid user type" });
     }
-    if (!first_name?.trim() || !last_name?.trim() || !organization_id) {
+    const person = cleanPerson(req.body);
+    if (!person.first_name || !person.last_name || !organization_id) {
       return res.status(400).json({ message: "First name, last name and organization are required" });
+    }
+    const startingPoints = parseStartingPoints(starting_points);
+    if (startingPoints === null) {
+      return res.status(400).json({ message: "Starting points must be a whole number" });
     }
 
     const organization = await Organization.findByPk(organization_id);
@@ -682,49 +829,15 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ message: "Organization not found" });
     }
 
-    const password = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+    const password = generatePassword();
     const hashedPassword = await hashPassword(password);
-    const names = {
-      first_name: first_name.trim(),
-      middle_name: middle_name?.trim() || "",
-      last_name: last_name.trim(),
-      email: email?.trim().toLowerCase() || "",
-    };
 
     const user = await User.sequelize.transaction(async (transaction) => {
-      // serialize code generation so two signups can't get the same code
-      await User.sequelize.query("SELECT pg_advisory_xact_lock(hashtext('users_code'))", { transaction });
-      const maxCode = await User.max("code", { transaction });
-      const code = (maxCode || 0) + 1;
-
-      const [userRole] = await UserRole.findOrCreate({
-        where: { title: typeConfig.userRole },
-        transaction,
-      });
-
-      const user = await User.create(
-        { code, password: hashedPassword, role_id: userRole.id, upload_id: null },
-        { transaction }
+      const code = await nextUserCode(transaction);
+      return createUserRecord(
+        { typeConfig, code, hashedPassword, person, organizationId: organization_id, startingPoints },
+        transaction
       );
-
-      const [employeeRole] = await EmployeeRole.findOrCreate({
-        where: { title: typeConfig.employeeRole },
-        transaction,
-      });
-
-      await Employee.create(
-        { ...names, organization_id, role_id: employeeRole.id, user_id: user.id },
-        { transaction }
-      );
-
-      if (typeConfig.adminRole) {
-        await AdminsUsers.create(
-          { user_id: user.id, role: typeConfig.adminRole },
-          { transaction }
-        );
-      }
-
-      return user;
     });
 
     res.status(201).json({
@@ -732,15 +845,122 @@ exports.createUser = async (req, res) => {
       message: "User created successfully",
       user: {
         id: user.id,
-        name: `${names.first_name} ${names.middle_name} ${names.last_name}`.replace(/\s+/g, " ").trim(),
+        name: fullName(person),
         user_type,
         organization: organization.name,
         username: user.code,
         password,
+        points: startingPoints,
       },
     });
   } catch (error) {
     console.error("Create User Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// users: [{ first_name, middle_name, last_name, job_title, employee_code }], up to 50 per request
+exports.bulkCreateUsers = async (req, res) => {
+  try {
+    const { user_type, organization_id, starting_points, users } = req.body;
+
+    const typeConfig = NEW_USER_TYPES[user_type];
+    if (!typeConfig) {
+      return res.status(400).json({ message: "Invalid user type" });
+    }
+    if (!Array.isArray(users) || users.length === 0 || users.length > 50) {
+      return res.status(400).json({ message: "Send between 1 and 50 users per request" });
+    }
+    const startingPoints = parseStartingPoints(starting_points);
+    if (startingPoints === null) {
+      return res.status(400).json({ message: "Starting points must be a whole number" });
+    }
+    const organization = await Organization.findByPk(organization_id);
+    if (!organization) {
+      return res.status(400).json({ message: "Organization not found" });
+    }
+
+    const people = users.map((u) => ({ ...u, person: cleanPerson(u) }));
+    const missingName = people.findIndex((p) => !p.person.first_name);
+    if (missingName >= 0) {
+      return res.status(400).json({ message: `User number ${missingName + 1} has no name` });
+    }
+
+    // hash before the transaction so the code lock is held briefly
+    const credentials = [];
+    for (let i = 0; i < people.length; i++) {
+      const password = generatePassword();
+      credentials.push({ password, hashedPassword: await hashPassword(password) });
+    }
+
+    const created = await User.sequelize.transaction(async (transaction) => {
+      let code = await nextUserCode(transaction);
+      const result = [];
+      for (let i = 0; i < people.length; i++) {
+        const { person, job_title, employee_code } = people[i];
+        const user = await createUserRecord(
+          {
+            typeConfig,
+            code: code++,
+            hashedPassword: credentials[i].hashedPassword,
+            person,
+            organizationId: organization_id,
+            jobTitle: String(job_title || "").trim() || null,
+            startingPoints,
+          },
+          transaction
+        );
+        result.push({
+          employee_code: employee_code ?? "",
+          name: fullName(person),
+          job_title: String(job_title || "").trim(),
+          username: user.code,
+          password: credentials[i].password,
+        });
+      }
+      return result;
+    });
+
+    res.status(201).json({
+      status: "success",
+      message: "Users created successfully",
+      organization: organization.name,
+      users: created,
+    });
+  } catch (error) {
+    console.error("Bulk Create Users Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// every employee user, for the bulk points template
+exports.usersList = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: ["id", "code"],
+      where: { deleted: false },
+      include: [
+        {
+          model: Employee,
+          as: "employee",
+          required: true,
+          attributes: ["first_name", "middle_name", "last_name"],
+          include: [{ model: Organization, as: "organization", required: false, attributes: ["name"] }],
+        },
+      ],
+      order: [["code", "ASC"]],
+    });
+
+    res.status(200).json({
+      status: "success",
+      users: users.map((u) => ({
+        id: u.id,
+        username: u.code,
+        name: fullName(u.employee),
+        organization: u.employee.organization?.name || "",
+      })),
+    });
+  } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -822,10 +1042,10 @@ exports.userProfile = async (req, res) => {
       ? await Organization.findByPk(organizationId, { attributes: ["name"] })
       : null;
 
-    // every user starts with 100 points, so create the row on first lookup
+    // users without a points row start from 0; create it on first lookup
     const [userPoints] = await UsersPoints.findOrCreate({
       where: { user_id: user.id },
-      defaults: { points: 100 },
+      defaults: { points: 0 },
     });
 
     const history = await PointsHistory.findAll({
@@ -863,9 +1083,6 @@ exports.userProfile = async (req, res) => {
       ],
       order: [["createdAt", "DESC"]],
     });
-
-    const fullName = (p) =>
-      p ? [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(" ") : null;
 
     res.status(200).json({
       status: "success",

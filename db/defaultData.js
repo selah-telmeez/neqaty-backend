@@ -5,7 +5,7 @@ module.exports = {
     { id: 4, name: "Wabys", createdAt: "2025-03-18T08:22:18.289Z", updatedAt: "2025-03-18T08:22:18.289Z" },
   ],
   organizations: [
-    { id: 13, name: "Wabys", location: null, city: "القاهرة", type: "company", authority_id: 4, deleted: false, createdAt: "2025-03-18T08:22:18.289Z" },
+    { id: 13, name: "Selah Telmez", location: null, city: "القاهرة", type: "company", authority_id: 4, deleted: false, createdAt: "2025-03-18T08:22:18.289Z" },
   ],
   userRoles: [
     { id: 48, title: "admin", deleted: false, createdAt: "2026-09-30T01:57:37.738Z" },
