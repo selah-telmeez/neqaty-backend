@@ -1,16 +1,5 @@
 {
   "regions": [
     "fra1"
-  ],
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "db/models/**"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api"
-    }
   ]
 }

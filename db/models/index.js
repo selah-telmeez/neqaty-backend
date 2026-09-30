@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
 const config = require('../../config/config.js')[process.env.NODE_ENV || 'development'];
 
@@ -21,13 +19,29 @@ const sequelize = config.url
 
 const db = {};
 
-// Dynamically load models
-fs.readdirSync(__dirname)
-  .filter(file => file !== 'index.js' && file.endsWith('.js'))
-  .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize, DataTypes);
-    db[model.name] = model;
-  });
+// Load models (listed explicitly so serverless bundlers include every file;
+// add new model files here)
+[
+  require('./adminsusers'),
+  require('./authority'),
+  require('./class'),
+  require('./department'),
+  require('./employee'),
+  require('./employeeRole'),
+  require('./organization'),
+  require('./pointshistory'),
+  require('./rewardsandpunishments'),
+  require('./setting'),
+  require('./specialization'),
+  require('./student'),
+  require('./teacher'),
+  require('./user'),
+  require('./userRole'),
+  require('./userspoints'),
+].forEach(defineModel => {
+  const model = defineModel(sequelize, DataTypes);
+  db[model.name] = model;
+});
 
   Object.keys(db).forEach(modelName => {
     if (db[modelName].associate) {
